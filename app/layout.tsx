@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CrisisComm — Omni-Lingual Emergency Broadcaster",
-  description: "Real-time multilingual crisis communication for Andhra Pradesh emergency services.",
+  title: "Aegis — Your voice, always heard.",
+  description: "Real-time acoustic monitoring that sends a compressed audio clip and GPS coordinates to your guardian the moment stress levels spike.",
 };
 
 export default function RootLayout({

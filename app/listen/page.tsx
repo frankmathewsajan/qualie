@@ -313,7 +313,7 @@ export default function ListenPage() {
           <p className="text-[11px] font-medium tracking-widest text-slate-400 uppercase">{todayStr()}</p>
           <p className="text-[10px] font-mono text-slate-300 mt-px">Acoustic Monitor</p>
         </div>
-        <Link href="/dashboard"
+        <Link href="/"
           className="w-8 h-8 rounded-full bg-white/70 backdrop-blur-sm shadow-sm flex items-center justify-center hover:shadow-md transition-shadow">
           <Home className="w-3.5 h-3.5 text-slate-500" />
         </Link>
