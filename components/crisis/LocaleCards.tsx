@@ -1,34 +1,36 @@
 import { Zap } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Area } from "@/lib/crisis/types";
 
 const LOCALES = [
-  { key: "en" as const, lang: "EN", label: "English", flag: "🇬🇧", border: "border-red-500",   badge: "bg-red-500/20 text-red-400 border-red-500/30",   dot: "bg-red-500"   },
-  { key: "te" as const, lang: "TE", label: "Telugu",  flag: "🇮🇳", border: "border-amber-500", badge: "bg-amber-500/20 text-amber-400 border-amber-500/30", dot: "bg-amber-500" },
-  { key: "es" as const, lang: "ES", label: "Español", flag: "🇪🇸", border: "border-green-500", badge: "bg-green-500/20 text-green-400 border-green-500/30", dot: "bg-green-500" },
+  { key: "en" as const, lang: "EN", label: "English", flag: "🇬🇧", border: "border-slate-700",   badgeCls: "bg-blue-500/10 text-blue-400 border-blue-500/30",   dot: "bg-blue-400"   },
+  { key: "te" as const, lang: "TE", label: "Telugu",  flag: "🇮🇳", border: "border-slate-700",   badgeCls: "bg-amber-500/10 text-amber-400 border-amber-500/30", dot: "bg-amber-400" },
+  { key: "es" as const, lang: "ES", label: "Español", flag: "🇪🇸", border: "border-slate-700",   badgeCls: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30", dot: "bg-emerald-400" },
 ];
 
 export function LocaleCards({ area }: { area: Area }) {
   return (
     <section>
-      <p className="text-[11px] tracking-[0.25em] text-neutral-500 uppercase mb-4">
-        🌐 Localized Audio Transcripts · 3 Locales
-      </p>
+      <p className="text-xs font-medium text-slate-400 mb-3">🌐 Localized Transcripts — 3 locales</p>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {LOCALES.map((l) => (
-          <div key={l.key} className={`rounded-lg border ${l.border} bg-neutral-900 p-4 flex flex-col gap-3`}>
-            <div className="flex items-center justify-between">
+        {LOCALES.map(l => (
+          <Card key={l.key} className={`${l.border} bg-slate-900`}>
+            <CardHeader className="pb-2 flex-row items-center justify-between space-y-0">
               <div className="flex items-center gap-2">
-                <span className={`text-[10px] font-bold tracking-widest px-2 py-0.5 rounded border ${l.badge}`}>{l.lang}</span>
-                <span className="text-[11px] text-neutral-400">{l.flag} {l.label}</span>
+                <Badge variant="outline" className={`text-[10px] font-bold ${l.badgeCls}`}>{l.lang}</Badge>
+                <span className="text-[11px] text-slate-400">{l.flag} {l.label}</span>
               </div>
-              <span className={`w-2 h-2 rounded-full animate-pulse ${l.dot}`} />
-            </div>
-            <p className="text-xs text-neutral-300 leading-relaxed">{area.alerts[l.key]}</p>
-            <div className="flex items-center gap-1.5 mt-auto pt-2 border-t border-neutral-800">
-              <Zap className="w-3 h-3 text-neutral-600" />
-              <span className="text-[10px] text-neutral-600">Audio rendered · 0ms latency</span>
-            </div>
-          </div>
+              <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${l.dot}`} />
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-slate-300 leading-relaxed">{area.alerts[l.key]}</p>
+              <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-slate-800">
+                <Zap className="w-3 h-3 text-slate-600" />
+                <span className="text-[10px] text-slate-600">Audio rendered · 0ms latency</span>
+              </div>
+            </CardContent>
+          </Card>
         ))}
       </div>
     </section>
