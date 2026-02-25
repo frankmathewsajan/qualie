@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useAudioMeter } from '@/hooks/useAudioMeter';
 import { useWeather, decodeWeather } from '@/hooks/useWeather';
+import { useGeminiLive } from '@/hooks/useGeminiLive';
 
 const THRESHOLD = 85;
 
@@ -110,12 +111,18 @@ export default function ListenPage() {
   const { state, volume, error: micError, start, stop, getBlob } = useAudioMeter();
   const { weatherState, data: wx, weatherError, requestWeather } = useWeather();
 
-  const [breached, setBreached]       = useState(false);
-  const [dismissed, setDismissed]     = useState(false);
-  const [peakVol, setPeakVol]         = useState(0);
-  const [sessionTime, setSessionTime] = useState(0);
-  const [sending, setSending]         = useState(false);
-  const [sent, setSent]               = useState(false);
+  const { state: geminiState, isSpeaking, chunksSent,
+          connect: geminiConnect, disconnect: geminiDisconnect } = useGeminiLive();
+
+  const [breached, setBreached]             = useState(false);
+  const [dismissed, setDismissed]           = useState(false);
+  const [peakVol, setPeakVol]               = useState(0);
+  const [sessionTime, setSessionTime]       = useState(0);
+  const [sending, setSending]               = useState(false);
+  const [sent, setSent]                     = useState(false);
+  const [geminiAnalysis, setGeminiAnalysis] = useState<string | null>(null);
+  const [backendStep, setBackendStep]       = useState<'compressing'|'uploading'|'analysing'|'done'|null>(null);
+  const [analysisMs, setAnalysisMs]         = useState<number | null>(null);
 
   const timerRef   = useRef<ReturnType<typeof setInterval> | null>(null);
   const sentRef    = useRef(false);
@@ -195,17 +202,27 @@ export default function ListenPage() {
     if (sentRef.current) return;
     sentRef.current = true;
     setSending(true);
+    setBackendStep('compressing');
     try {
+      setBackendStep('compressing');
       const blob = await getBlob();
+      setBackendStep('uploading');
       const fd = new FormData();
       fd.append('audio', blob, 'recording.webm');
       fd.append('volume', String(peakVol));
       fd.append('location', JSON.stringify({ lat: wx?.lat, lon: wx?.lon }));
       fd.append('city', wx?.city ?? '');
-      await fetch('/api/alert', { method: 'POST', body: fd });
+      setBackendStep('analysing');
+      const t0  = Date.now();
+      const res  = await fetch('/api/alert', { method: 'POST', body: fd });
+      const json = await res.json().catch(() => ({})) as { analysis?: string };
+      setAnalysisMs(Date.now() - t0);
+      if (json.analysis) setGeminiAnalysis(json.analysis);
       setSent(true);
+      setBackendStep('done');
     } catch (e) {
       console.error('[listen] alert failed', e);
+      setBackendStep(null);
     } finally {
       setSending(false);
     }
@@ -235,21 +252,25 @@ export default function ListenPage() {
 
   const handleToggle = () => {
     if (isRecording) {
-      stop(); setBreached(false); setPeakVol(0); sentRef.current = false; setSent(false);
+      stop();
+      geminiDisconnect();
+      setBreached(false); setPeakVol(0); sentRef.current = false; setSent(false);
+      setGeminiAnalysis(null); setBackendStep(null); setAnalysisMs(null);
     } else {
       setBreached(false); setPeakVol(0); sentRef.current = false; setSent(false);
-      // quick press anim before we start
+      setGeminiAnalysis(null); setBackendStep(null); setAnalysisMs(null);
       const gsap = gsapRef.current;
+      const doStart = () => { start(); geminiConnect(); };
       if (gsap && beginBtnRef.current) {
         gsap.to(beginBtnRef.current, {
           scale: 0.94, duration: 0.12, ease: 'power2.in',
           onComplete: () => {
             gsap.to(beginBtnRef.current, { scale: 1, duration: 0.2, ease: 'back.out(2)' });
-            start();
+            doStart();
           },
         });
       } else {
-        start();
+        doStart();
       }
     }
   };
@@ -277,11 +298,13 @@ export default function ListenPage() {
                     {sent ? 'Alert delivered' : sending ? 'Sending alert…' : 'Volume threshold exceeded'}
                   </p>
                   <p className="text-slate-500 text-[13px] mt-0.5 leading-relaxed">
-                    {sent
-                      ? 'Audio and location sent to server. Parent notification dispatched.'
-                      : sending
-                        ? 'Compressing and transmitting audio…'
-                        : 'Acoustic stress above limit. Preparing alert.'}
+                    {sent && geminiAnalysis
+                      ? geminiAnalysis
+                      : sent
+                        ? 'Audio and location sent to server. Parent notification dispatched.'
+                        : sending
+                          ? 'Analysing with Gemini AI…'
+                          : 'Acoustic stress above limit. Preparing alert.'}
                   </p>
                   {wx && (
                     <p className="flex items-center gap-1 text-slate-400 text-xs mt-2">
@@ -313,10 +336,35 @@ export default function ListenPage() {
           <p className="text-[11px] font-medium tracking-widest text-slate-400 uppercase">{todayStr()}</p>
           <p className="text-[10px] font-mono text-slate-300 mt-px">Acoustic Monitor</p>
         </div>
-        <Link href="/"
-          className="w-8 h-8 rounded-full bg-white/70 backdrop-blur-sm shadow-sm flex items-center justify-center hover:shadow-md transition-shadow">
-          <Home className="w-3.5 h-3.5 text-slate-500" />
-        </Link>
+        <div className="flex items-center gap-2">
+          {/* Gemini Live status badge */}
+          {geminiState === 'connecting' && (
+            <div className="flex items-center gap-1.5 bg-white/60 rounded-full px-2.5 py-1 border border-white/80">
+              <div className="w-3 h-3 rounded-full border-[1.5px] border-slate-200 animate-spin" style={{ borderTopColor: accent }} />
+              <span className="text-[10px] font-semibold text-slate-400 tracking-wide">AI</span>
+            </div>
+          )}
+          {geminiState === 'live' && (
+            <div className="flex items-center gap-1.5 bg-white/60 rounded-full px-2.5 py-1 border border-indigo-100">
+              <span className={`w-1.5 h-1.5 rounded-full ${
+                isSpeaking ? 'bg-indigo-500 animate-ping' : 'bg-indigo-400'
+              }`} />
+              <span className="text-[10px] font-semibold tracking-wide" style={{ color: '#6366f1' }}>
+                {isSpeaking ? 'AEGIS' : `AI · ${chunksSent}`}
+              </span>
+            </div>
+          )}
+          {geminiState === 'error' && (
+            <div className="flex items-center gap-1.5 bg-amber-50 rounded-full px-2.5 py-1 border border-amber-100">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+              <span className="text-[10px] font-semibold text-amber-500 tracking-wide">AI ERR</span>
+            </div>
+          )}
+          <Link href="/"
+            className="w-8 h-8 rounded-full bg-white/70 backdrop-blur-sm shadow-sm flex items-center justify-center hover:shadow-md transition-shadow">
+            <Home className="w-3.5 h-3.5 text-slate-500" />
+          </Link>
+        </div>
       </header>
 
       {/* ── Weather card ─────────────────────────────────────────────────── */}
@@ -404,6 +452,23 @@ export default function ListenPage() {
         )}
       </div>
 
+      {/* ── Backend process indicator ────────────────────────────────────── */}
+      {backendStep && (
+        <div className="px-5 pt-2 flex justify-end">
+          <div className="flex items-center gap-1.5 opacity-70">
+            {backendStep !== 'done' && (
+              <span className="w-1 h-1 rounded-full animate-ping bg-slate-400" />
+            )}
+            <span className="text-[10px] font-mono text-slate-400 tracking-wider">
+              {backendStep === 'compressing' && '↓ compressing audio…'}
+              {backendStep === 'uploading'   && '↑ uploading to server…'}
+              {backendStep === 'analysing'   && '⟳ gemini analysing…'}
+              {backendStep === 'done'        && `✓ analysis done${analysisMs ? ' · ' + analysisMs + 'ms' : ''}`}
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* ── Spacer ───────────────────────────────────────────────────────── */}
       <div className="flex-1" />
 
@@ -424,6 +489,33 @@ export default function ListenPage() {
           <div className="bg-amber-50/80 border border-amber-100 rounded-2xl px-4 py-2.5 flex items-start gap-2 max-w-xs">
             <AlertTriangle className="w-3.5 h-3.5 text-amber-500 mt-0.5 shrink-0"/>
             <p className="text-[12px] text-amber-700">{micError}</p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Tactical green overlay (live) ────────────────────────────────── */}
+      {geminiState === 'live' && (
+        <div className="fixed inset-0 pointer-events-none z-0"
+             style={{ background: 'radial-gradient(ellipse at 50% 100%, rgba(16,185,129,0.07) 0%, transparent 70%)',
+                      animation: 'pulse 3s ease-in-out infinite' }} />
+      )}
+
+      {/* ── Packets transmitted telemetry ────────────────────────────────── */}
+      {geminiState === 'live' && (
+        <div className="fixed bottom-4 left-4 pointer-events-none z-10">
+          <p className="font-mono text-[9px] text-emerald-600/40 tracking-widest uppercase">Packets Transmitted</p>
+          <p className="font-mono text-[28px] font-black text-emerald-700/20 leading-none tabular-nums">
+            {String(chunksSent).padStart(5, '0')}
+          </p>
+        </div>
+      )}
+
+      {/* ── Active intervention flag ──────────────────────────────────────── */}
+      {isSpeaking && (
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10">
+          <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-400/20 rounded-full px-3 py-1.5 backdrop-blur-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+            <span className="text-[10px] font-semibold text-emerald-600 tracking-widest uppercase">Intervention Active</span>
           </div>
         </div>
       )}

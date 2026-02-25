@@ -39,7 +39,7 @@ export function useWeather() {
 
   const requestWeather = useCallback(() => {
     if (!navigator?.geolocation) {
-      setWeatherError('Geolocation not supported');
+      setWeatherError('Geolocation not supported in this browser.');
       setWeatherState('error');
       return;
     }
@@ -50,67 +50,64 @@ export function useWeather() {
       async ({ coords: { latitude: lat, longitude: lon } }) => {
         setWeatherState('fetching');
 
-        // Fire both requests simultaneously, don't await geocode before showing weather
-        const [wRes, gResPromise] = [
-          fetch(
-            'https://api.open-meteo.com/v1/forecast' +
-            '?latitude=' + lat.toFixed(4) + '&longitude=' + lon.toFixed(4) +
-            '&current=temperature_2m,apparent_temperature,relative_humidity_2m,' +
-            'wind_speed_10m,weather_code,uv_index' +
-            '&temperature_unit=celsius&wind_speed_unit=kmh&timezone=auto'
-          ),
-          fetch(
-            'https://nominatim.openstreetmap.org/reverse?lat=' + lat +
-            '&lon=' + lon + '&format=json&zoom=14',
-            { headers: { 'Accept-Language': 'en', 'User-Agent': 'Qualie/1.0' } }
-          ),
-        ];
-
+        // ── 1. Fetch weather from our proxy (server sets proper headers + timeout) ──
+        let wJson: Record<string, unknown>;
         try {
-          const wJson = await (await wRes).json();
-          const c = wJson.current;
-          const now = new Date();
-
-          // Show weather immediately with coords as placeholder city
-          const partial: WeatherData = {
-            temp:      Math.round(c.temperature_2m),
-            feelsLike: Math.round(c.apparent_temperature),
-            humidity:  c.relative_humidity_2m,
-            windSpeed: Math.round(c.wind_speed_10m),
-            uvIndex:   c.uv_index != null ? Math.round(c.uv_index) : undefined,
-            code:      c.weather_code,
-            desc:      decodeWeather(c.weather_code).label,
-            city:      lat.toFixed(2) + ', ' + lon.toFixed(2),
-            country:   '',
-            lat, lon,
-            localTime: now.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' }),
-          };
-          setData(partial);
-          setWeatherState('ready');
-
-          // Then update city name when geocode resolves (non-blocking)
-          gResPromise.then(r => r.json()).then(gJson => {
-            const a = gJson.address || {};
-            const city = a.suburb || a.neighbourhood || a.city || a.town || a.village || a.county;
-            if (city) setData(d => d ? { ...d, city, country: (a.country_code || '').toUpperCase() } : d);
-          }).catch(() => {/* city stays as coords */});
-
-        } catch {
-          setWeatherError('Could not fetch weather');
+          const wRes = await fetch(
+            `/api/weather?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`
+          );
+          if (!wRes.ok) throw new Error('Weather API returned ' + wRes.status);
+          wJson = await wRes.json();
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : 'Failed to fetch weather';
+          console.error('[useWeather] weather fetch error:', msg);
+          setWeatherError('Could not load weather. Check your connection.');
           setWeatherState('error');
+          return;
         }
+
+        const c   = wJson.current as Record<string, number>;
+        const now = new Date();
+
+        // Show weather immediately with lat/lon as placeholder city
+        const partial: WeatherData = {
+          temp:      Math.round(c.temperature_2m),
+          feelsLike: Math.round(c.apparent_temperature),
+          humidity:  c.relative_humidity_2m,
+          windSpeed: Math.round(c.wind_speed_10m),
+          uvIndex:   c.uv_index != null ? Math.round(c.uv_index) : undefined,
+          code:      c.weather_code,
+          desc:      decodeWeather(c.weather_code).label,
+          city:      lat.toFixed(2) + '°, ' + lon.toFixed(2) + '°',
+          country:   '',
+          lat, lon,
+          localTime: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+        };
+        setData(partial);
+        setWeatherState('ready');
+
+        // ── 2. Kick off geocode in background – failure just keeps coordinate label ──
+        fetch(`/api/geocode?lat=${lat}&lon=${lon}`)
+          .then(r => (r.ok ? r.json() : null))
+          .then((geo: { city: string | null; country: string } | null) => {
+            if (geo?.city) {
+              setData(d => d ? { ...d, city: geo.city!, country: geo.country ?? '' } : d);
+            }
+          })
+          .catch(() => { /* city stays as coordinates — not a failure */ });
       },
       (err) => {
         const msgs: Record<number, string> = {
-          1: 'Location access denied.',
-          2: 'Location unavailable.',
-          3: 'Location timed out.',
+          1: 'Location access denied. Enable it in browser settings.',
+          2: 'Location signal unavailable. Try moving to a window.',
+          3: 'Location request timed out. Try again.',
         };
-        setWeatherError(msgs[err.code] ?? err.message);
+        const msg = msgs[err.code] ?? err.message;
+        console.error('[useWeather] geolocation error:', msg);
+        setWeatherError(msg);
         setWeatherState('error');
       },
-      // Low-accuracy = instant cell/wifi fix instead of slow GPS
-      { enableHighAccuracy: false, timeout: 5000, maximumAge: 120000 }
+      { enableHighAccuracy: false, timeout: 5000, maximumAge: 120_000 }
     );
   }, []);
 
