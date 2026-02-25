@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 interface Props { value: number }
 
-const CX = 200, CY = 195, R = 155, R_INNER = 110;
+const CX = 200, CY = 195, R = 155;
 const START_DEG = -135, TOTAL_DEG = 270;
 
 function polar(deg: number, r = R) {
@@ -59,7 +59,7 @@ export function ThreatGauge({ value }: Props) {
       </div>
 
       <div className='flex-1 flex flex-col items-center justify-center px-4 py-2 gap-2'>
-        <svg viewBox='0 0 400 260' className='w-full max-w-[360px]'>
+        <svg viewBox='0 0 400 260' className='w-full max-w-90'>
           {/* Background arc */}
           <path d={arcPath(START_DEG, START_DEG + TOTAL_DEG)} fill='none' stroke='#0f1e26' strokeWidth='20' strokeLinecap='round' />
 

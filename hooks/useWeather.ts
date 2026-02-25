@@ -46,10 +46,13 @@ export function useWeather() {
     setWeatherState('locating');
     setWeatherError(null);
 
-    navigator.geolocation.getCurrentPosition(
-      async ({ coords: { latitude: lat, longitude: lon } }) => {
+    // Two-stage geolocation strategy:
+    //   Stage 1 – 12s timeout, accept cached fix up to 5 min old (fast on repeat visits)
+    //   Stage 2 – on timeout only, retry with maximumAge: Infinity to use any cached fix
+    //             instantly, or wait the full 12s for a fresh one.
+    //   This eliminates the 5s TIMEOUT error that fired on first GPS acquisition.
+    const handlePosition = async ({ coords: { latitude: lat, longitude: lon } }: GeolocationPosition) => {
         setWeatherState('fetching');
-
         // ── 1. Fetch weather from our proxy (server sets proper headers + timeout) ──
         let wJson: Record<string, unknown>;
         try {
@@ -95,19 +98,34 @@ export function useWeather() {
             }
           })
           .catch(() => { /* city stays as coordinates — not a failure */ });
-      },
-      (err) => {
-        const msgs: Record<number, string> = {
-          1: 'Location access denied. Enable it in browser settings.',
-          2: 'Location signal unavailable. Try moving to a window.',
-          3: 'Location request timed out. Try again.',
-        };
-        const msg = msgs[err.code] ?? err.message;
-        console.error('[useWeather] geolocation error:', msg);
-        setWeatherError(msg);
-        setWeatherState('error');
-      },
-      { enableHighAccuracy: false, timeout: 5000, maximumAge: 120_000 }
+    };
+
+    const handleError = (err: GeolocationPositionError, isRetry = false) => {
+      if (err.code === 3 && !isRetry) {
+        // Stage 2: timeout on first attempt — retry immediately accepting any cached fix
+        navigator.geolocation.getCurrentPosition(
+          handlePosition,
+          (err2) => handleError(err2, true),
+          { enableHighAccuracy: false, timeout: 12_000, maximumAge: Infinity }
+        );
+        return;
+      }
+      const msgs: Record<number, string> = {
+        1: 'Location access denied. Enable it in browser settings.',
+        2: 'Location signal unavailable. Try moving to a window.',
+        3: 'Location request timed out. Try again.',
+      };
+      const msg = msgs[err.code] ?? err.message;
+      console.error('[useWeather] geolocation error:', msg);
+      setWeatherError(msg);
+      setWeatherState('error');
+    };
+
+    // Stage 1: 12s timeout, accept cached fix up to 5 min old
+    navigator.geolocation.getCurrentPosition(
+      handlePosition,
+      (err) => handleError(err, false),
+      { enableHighAccuracy: false, timeout: 12_000, maximumAge: 300_000 }
     );
   }, []);
 

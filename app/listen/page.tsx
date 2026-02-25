@@ -9,7 +9,11 @@ import { useAudioMeter } from '@/hooks/useAudioMeter';
 import { useWeather, decodeWeather } from '@/hooks/useWeather';
 import { useGeminiLive } from '@/hooks/useGeminiLive';
 
-const THRESHOLD = 85;
+const THRESHOLD = 65;
+
+// Words that auto-trigger the alert even below the volume threshold.
+// Case-insensitive substring match on Gemini's live input transcript.
+const DISTRESS_KEYWORDS = ['stop', 'help', 'danger', 'fire', 'attack', 'threat', 'emergency', 'run', 'scared'];
 
 // ─── Inline weather SVG icons (no external dep) ──────────────────────────────
 function WIcon({ emoji, size = 64 }: { emoji: string; size?: number }) {
@@ -111,8 +115,24 @@ export default function ListenPage() {
   const { state, volume, error: micError, start, stop, getBlob } = useAudioMeter();
   const { weatherState, data: wx, weatherError, requestWeather } = useWeather();
 
+  const sendAlertRef = useRef<(() => void) | null>(null);
+
   const { state: geminiState, isSpeaking, chunksSent,
-          connect: geminiConnect, disconnect: geminiDisconnect } = useGeminiLive();
+          connect: geminiConnect, disconnect: geminiDisconnect } = useGeminiLive({
+    onInputTranscript: (text) => {
+      // Show transcript as subtle subtext (auto-clears after 4s)
+      setLastTranscript(text);
+      if (transcriptTimer.current) clearTimeout(transcriptTimer.current);
+      transcriptTimer.current = setTimeout(() => setLastTranscript(null), 4000);
+
+      const lower = text.toLowerCase();
+      const hit   = DISTRESS_KEYWORDS.some(kw => lower.includes(kw));
+      if (hit) {
+        console.log('[listen] keyword match in transcript:', text);
+        sendAlertRef.current?.();
+      }
+    },
+  });
 
   const [breached, setBreached]             = useState(false);
   const [dismissed, setDismissed]           = useState(false);
@@ -123,10 +143,14 @@ export default function ListenPage() {
   const [geminiAnalysis, setGeminiAnalysis] = useState<string | null>(null);
   const [backendStep, setBackendStep]       = useState<'compressing'|'uploading'|'analysing'|'done'|null>(null);
   const [analysisMs, setAnalysisMs]         = useState<number | null>(null);
+  const [audioPlaybackUrl, setAudioPlaybackUrl] = useState<string | null>(null);
+  const [lastTranscript, setLastTranscript]       = useState<string | null>(null);
 
-  const timerRef   = useRef<ReturnType<typeof setInterval> | null>(null);
-  const sentRef    = useRef(false);
-  const gsapRef    = useRef<Gsap | null>(null);
+  const timerRef          = useRef<ReturnType<typeof setInterval> | null>(null);
+  const sentRef           = useRef(false);
+  const gsapRef           = useRef<Gsap | null>(null);
+  const playbackUrlRef    = useRef<string | null>(null);
+  const transcriptTimer   = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // element refs for GSAP
   const headerRef    = useRef<HTMLElement>(null);
@@ -202,10 +226,17 @@ export default function ListenPage() {
     if (sentRef.current) return;
     sentRef.current = true;
     setSending(true);
+    setBreached(true);  // ensure breach sheet opens even on keyword-only trigger
+    setDismissed(false);
     setBackendStep('compressing');
     try {
       setBackendStep('compressing');
       const blob = await getBlob();
+      // Save a local copy so the user can play it back
+      if (playbackUrlRef.current) URL.revokeObjectURL(playbackUrlRef.current);
+      const objUrl = URL.createObjectURL(blob);
+      playbackUrlRef.current = objUrl;
+      setAudioPlaybackUrl(objUrl);
       setBackendStep('uploading');
       const fd = new FormData();
       fd.append('audio', blob, 'recording.webm');
@@ -227,6 +258,14 @@ export default function ListenPage() {
       setSending(false);
     }
   }, [getBlob, peakVol, wx]);
+
+  // Keep a ref so the keyword callback (which is closed over at render time) can always call the latest sendAlert
+  useEffect(() => { sendAlertRef.current = sendAlert; }, [sendAlert]);
+
+  // Revoke the blob URL when the component unmounts to avoid memory leaks
+  useEffect(() => () => {
+    if (playbackUrlRef.current) URL.revokeObjectURL(playbackUrlRef.current);
+  }, []);
 
   // ── breach detect ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -256,6 +295,8 @@ export default function ListenPage() {
       geminiDisconnect();
       setBreached(false); setPeakVol(0); sentRef.current = false; setSent(false);
       setGeminiAnalysis(null); setBackendStep(null); setAnalysisMs(null);
+      if (playbackUrlRef.current) { URL.revokeObjectURL(playbackUrlRef.current); playbackUrlRef.current = null; }
+      setAudioPlaybackUrl(null);
     } else {
       setBreached(false); setPeakVol(0); sentRef.current = false; setSent(false);
       setGeminiAnalysis(null); setBackendStep(null); setAnalysisMs(null);
@@ -281,47 +322,62 @@ export default function ListenPage() {
 
       {/* ── Breach sheet ─────────────────────────────────────────────────── */}
       {breached && !dismissed && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center p-4 pb-10">
-          <div className="w-full max-w-sm rounded-3xl bg-white overflow-hidden"
-               style={{ boxShadow: '0 24px 80px rgba(239,68,68,0.18), 0 4px 16px rgba(0,0,0,0.08)' }}>
-            <div className="h-1.5 w-full bg-red-100 overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-end justify-center p-3 pb-8"
+             onClick={(e) => { if (e.target === e.currentTarget) setDismissed(true); }}>
+          <div className="w-full max-w-sm rounded-2xl bg-white overflow-hidden"
+               style={{ boxShadow: '0 16px 60px rgba(239,68,68,0.15), 0 2px 8px rgba(0,0,0,0.06)' }}>
+            <div className="h-1 w-full bg-red-100 overflow-hidden">
               <div className={'h-full bg-red-500 transition-all duration-700 ' +
                 (sending ? 'w-2/3 animate-pulse' : sent ? 'w-full' : 'w-1/4')} />
             </div>
-            <div className="px-5 py-5">
-              <div className="flex gap-3 items-start">
-                <div className="p-2.5 rounded-2xl shrink-0" style={{ background: '#fff1f2' }}>
-                  <PhoneCall className="w-5 h-5 text-red-500" />
+            <div className="px-4 py-3">
+              <div className="flex gap-2.5 items-start">
+                <div className="p-2 rounded-xl shrink-0" style={{ background: '#fff1f2' }}>
+                  <PhoneCall className="w-4 h-4 text-red-500" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-slate-800 text-[15px] leading-snug">
-                    {sent ? 'Alert delivered' : sending ? 'Sending alert…' : 'Volume threshold exceeded'}
-                  </p>
-                  <p className="text-slate-500 text-[13px] mt-0.5 leading-relaxed">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-semibold text-slate-800 text-[13px] leading-snug">
+                      {sent ? 'Alert delivered' : sending ? 'Sending alert…' : 'Threshold exceeded'}
+                    </p>
+                    <button onClick={() => setDismissed(true)}
+                      className="text-slate-300 hover:text-slate-600 transition-colors shrink-0 -mt-0.5 -mr-1 p-1">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                        <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                  <p className="text-slate-500 text-[11px] mt-0.5 leading-relaxed">
                     {sent && geminiAnalysis
                       ? geminiAnalysis
                       : sent
-                        ? 'Audio and location sent to server. Parent notification dispatched.'
+                        ? 'Audio and location sent. Notification dispatched.'
                         : sending
                           ? 'Analysing with Gemini AI…'
                           : 'Acoustic stress above limit. Preparing alert.'}
                   </p>
+                  {audioPlaybackUrl && (
+                    <div className="mt-2">
+                      <p className="text-[9px] font-mono text-slate-400 tracking-wider uppercase mb-1">Captured audio</p>
+                      <audio controls src={audioPlaybackUrl} className="w-full" style={{ height: 28, accentColor: '#ef4444' }} />
+                    </div>
+                  )}
                   {wx && (
-                    <p className="flex items-center gap-1 text-slate-400 text-xs mt-2">
-                      <MapPin className="w-3 h-3" />
+                    <p className="flex items-center gap-1 text-slate-400 text-[10px] mt-1.5">
+                      <MapPin className="w-2.5 h-2.5" />
                       {wx.city}{wx.country ? ', ' + wx.country : ''}
                     </p>
                   )}
                 </div>
               </div>
-              <div className="flex items-center justify-between mt-4">
-                <span className="flex items-center gap-2 text-xs font-mono text-slate-400">
+              <div className="flex items-center justify-between mt-2.5">
+                <span className="flex items-center gap-1.5 text-[10px] font-mono text-slate-400">
                   <span className={'w-1.5 h-1.5 rounded-full ' +
                     (sending ? 'bg-amber-400 animate-pulse' : sent ? 'bg-emerald-400' : 'bg-red-400')}/>
                   {sending ? 'TRANSMITTING' : sent ? 'DELIVERED' : peakVol + '/100'}
                 </span>
                 <button onClick={() => setDismissed(true)}
-                  className="text-[13px] font-medium text-slate-400 hover:text-slate-700 transition-colors px-3 py-1 rounded-lg">
+                  className="text-[11px] font-medium text-slate-400 hover:text-slate-700 transition-colors px-2 py-0.5 rounded-md">
                   Dismiss
                 </button>
               </div>
@@ -500,12 +556,13 @@ export default function ListenPage() {
                       animation: 'pulse 3s ease-in-out infinite' }} />
       )}
 
-      {/* ── Packets transmitted telemetry ────────────────────────────────── */}
-      {geminiState === 'live' && (
-        <div className="fixed bottom-4 left-4 pointer-events-none z-10">
-          <p className="font-mono text-[9px] text-emerald-600/40 tracking-widest uppercase">Packets Transmitted</p>
-          <p className="font-mono text-[28px] font-black text-emerald-700/20 leading-none tabular-nums">
-            {String(chunksSent).padStart(5, '0')}
+
+      {/* ── Live transcript subtext ───────────────────────────────────────── */}
+      {lastTranscript && (
+        <div className="fixed bottom-28 left-0 right-0 flex justify-center pointer-events-none z-10 px-8">
+          <p className="text-[11px] text-slate-600/70 font-mono italic text-center leading-relaxed"
+             style={{ textShadow: '0 1px 3px rgba(255,255,255,0.9), 0 0 8px rgba(255,255,255,0.6)' }}>
+            {lastTranscript}
           </p>
         </div>
       )}
