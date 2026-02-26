@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useRef, useState, useCallback } from 'react';
-import Link from 'next/link';
 import {
   Mic, Home, PhoneCall, Droplets, Wind,
   MapPin, AlertTriangle, Navigation, Thermometer, ChevronRight,
@@ -416,10 +415,10 @@ export default function ListenPage() {
               <span className="text-[10px] font-semibold text-amber-500 tracking-wide">AI ERR</span>
             </div>
           )}
-          <Link href="/"
+          <a href="https://aegis-weather.web.app/"
             className="w-8 h-8 rounded-full bg-white/70 backdrop-blur-sm shadow-sm flex items-center justify-center hover:shadow-md transition-shadow">
             <Home className="w-3.5 h-3.5 text-slate-500" />
-          </Link>
+          </a>
         </div>
       </header>
 
