@@ -5,17 +5,18 @@ import { collection, query, where, limit, getDocs, doc, getDoc, addDoc, Timestam
 // POST — create a new SOS session
 export async function POST(req: NextRequest) {
   try {
-    const { userId, lat, lng } = await req.json();
+    const { userId, lat, lng, sessionId } = await req.json();
     if (!userId) return NextResponse.json({ error: 'userId is required' }, { status: 400 });
 
     // Grab user display name
+    const { setDoc } = await import('firebase/firestore');
     const userSnap = await getDoc(doc(db, 'users', userId));
     const userName = userSnap.exists()
       ? (userSnap.data().displayName || userSnap.data().name || userId)
       : userId;
 
     // Create a short-lived SOS session document
-    const sessionRef = await addDoc(collection(db, 'sos_sessions'), {
+    const payload = {
       userId,
       userName,
       lat: lat ?? 0,
@@ -23,9 +24,18 @@ export async function POST(req: NextRequest) {
       createdAt: Timestamp.now(),
       expiresAt: Timestamp.fromDate(new Date(Date.now() + 24 * 60 * 60 * 1000)),
       active: true,
-    });
+    };
 
-    return NextResponse.json({ sessionId: sessionRef.id });
+    let createdId = '';
+    if (sessionId) {
+      await setDoc(doc(db, 'sos_sessions', sessionId), payload);
+      createdId = sessionId;
+    } else {
+      const sessionRef = await addDoc(collection(db, 'sos_sessions'), payload);
+      createdId = sessionRef.id;
+    }
+
+    return NextResponse.json({ sessionId: createdId });
   } catch (error) {
     console.error('[sos] failed to create session', error);
     return NextResponse.json({ error: 'Failed to create SOS session' }, { status: 500 });

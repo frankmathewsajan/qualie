@@ -132,6 +132,7 @@ export default function ListenPage() {
 
   const sendAlertRef = useRef<(() => void) | null>(null);
   const [sosLink, setSosLink] = useState<string | null>(null);
+  const sosLinkRef = useRef<string | null>(null);
   const [showFakeCall, setShowFakeCall] = useState(false);
   const [fakeCallName, setFakeCallName] = useState('Dad');
 
@@ -211,7 +212,16 @@ export default function ListenPage() {
         : '(location unavailable)';
 
       // 4. Build message (include crisis link if available)
-      const sosLine = sosLink ? `\nLive Tracking: ${sosLink}` : '';
+      let currentSosLink = sosLinkRef.current;
+      let newSessionId: string | null = null;
+      if (!currentSosLink) {
+        newSessionId = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+        currentSosLink = `${window.location.origin}/sos/${newSessionId}`;
+        sosLinkRef.current = currentSosLink;
+        setSosLink(currentSosLink);
+      }
+
+      const sosLine = currentSosLink ? `\nLive Tracking: ${currentSosLink}` : '';
       const msg = encodeURIComponent(
         `AEGIS EMERGENCY ALERT\n\n` +
         `User ID: ${currentUserId}\n` +
@@ -235,10 +245,19 @@ export default function ListenPage() {
       setTimeout(() => document.body.removeChild(a), 100);
 
       console.log('[listen] WhatsApp SOS triggered');
+
+      // 6. If we generated a new link, save the session to the backend
+      if (newSessionId) {
+        fetch('/api/sos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: currentUserId, lat: loc?.lat, lng: loc?.lon, sessionId: newSessionId }),
+        }).catch(e => console.warn('[sos] failed to pre-create crisis session:', e));
+      }
     } catch (error) {
       console.error('Error triggering WhatsApp SOS:', error);
     }
-  }, [currentUserId, location, sosLink]);
+  }, [currentUserId, location]);
 
   const [lastTranscript, setLastTranscript] = useState<string | null>(null);
   const lastTranscriptRef = useRef<string | null>(null);
@@ -373,21 +392,27 @@ export default function ListenPage() {
         return;
       }
 
-      // Create SOS crisis link in the background
+      // Create SOS crisis link in the background, resolving duplicates
+      let sessionId: string | null = null;
+      if (!sosLinkRef.current) {
+        sessionId = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+        const link = `${window.location.origin}/sos/${sessionId}`;
+        sosLinkRef.current = link;
+        setSosLink(link);
+      }
+
+      // If we generated the ID here OR want to update an existing session, POST to API
+      // Since API uses setDoc recursively, it's safe to call it repeatedly with the same userId/session.
       fetch('/api/sos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: currentUserId, lat: loc.lat, lng: loc.lon }),
-      })
-        .then(r => r.json())
-        .then(d => {
-          if (d.sessionId) {
-            const link = `${window.location.origin}/sos/${d.sessionId}`;
-            setSosLink(link);
-            console.log('[sos] Crisis link created:', link);
-          }
-        })
-        .catch(e => console.warn('[sos] failed to create crisis link:', e));
+        body: JSON.stringify({ 
+          userId: currentUserId, 
+          lat: loc.lat, 
+          lng: loc.lon, 
+          sessionId: sessionId || sosLinkRef.current?.split('/').pop() 
+        }),
+      }).catch(e => console.warn('[sos] failed to establish crisis link:', e));
 
       setBackendStep('compressing');
 
