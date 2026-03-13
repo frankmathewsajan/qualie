@@ -1012,43 +1012,45 @@ export default function ListenPage() {
             <p className="text-slate-500 text-sm font-medium">Initialising…</p>
           </div>
         ) : isRecording ? (
-          <div ref={livePillRef} className="flex flex-col items-center gap-3">
-            <div className="flex items-center gap-4">
+          <div ref={livePillRef} className="flex flex-col items-center gap-6">
+            {/* Tactical Buttons Row */}
+            <div className="flex items-center justify-center gap-6">
               {/* Ghost Button */}
               <button onClick={() => setStealthMode(true)}
-                className="group flex flex-col items-center gap-1 transition-all">
+                className="group flex flex-col items-center gap-1.5 transition-all">
                 <div className="w-14 h-14 rounded-2xl bg-[#0f1011] hover:bg-black active:scale-95 flex items-center justify-center shadow-lg border border-slate-700 transition-all">
                   <EyeOff className="w-5 h-5 text-slate-300" />
                 </div>
-                <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Ghost</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Ghost</span>
               </button>
 
               {/* SOS Button */}
               <button onClick={triggerWhatsAppSOS}
-                className="group flex flex-col items-center gap-1 transition-all">
+                className="group flex flex-col items-center gap-1.5 transition-all">
                 <div className="w-14 h-14 rounded-2xl bg-[#0f1011] hover:bg-black active:scale-95 flex items-center justify-center shadow-lg border border-slate-700 transition-all">
                   <PhoneCall className="w-5 h-5 text-slate-300" />
                 </div>
-                <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">SOS</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">SOS</span>
               </button>
 
               {/* Alarm Button */}
               <button onClick={playAlarm}
-                className="group flex flex-col items-center gap-1 transition-all z-10">
+                className="group flex flex-col items-center gap-1.5 transition-all z-10">
                 <div className="w-14 h-14 rounded-2xl bg-amber-500 hover:bg-amber-600 active:scale-95 flex items-center justify-center shadow-lg shadow-amber-200/50 border border-amber-400 transition-all">
                   <BellRing className="w-5 h-5 text-white" />
                 </div>
-                <span className="text-[9px] font-bold text-amber-500 uppercase tracking-widest z-10">Alarm</span>
+                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest z-10">Alarm</span>
               </button>
-              {/* Listen pill */}
-              <div className="flex items-center gap-3 bg-white/60 backdrop-blur-sm rounded-2xl px-5 py-3 shadow-sm border border-white/80">
-                <span className="relative flex h-2.5 w-2.5">
-                  <span ref={dotRef} className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"/>
-                </span>
-                <p className="text-slate-600 text-sm font-medium">Listening</p>
-                <span className="text-slate-200">·</span>
-                <span className="text-slate-400 text-xs font-mono">{fmtTime(sessionTime)}</span>
-              </div>
+            </div>
+
+            {/* Listen pill */}
+            <div className="flex items-center gap-3 bg-white/60 backdrop-blur-sm rounded-2xl px-5 py-3 shadow-sm border border-white/80">
+              <span className="relative flex h-2.5 w-2.5">
+                <span ref={dotRef} className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"/>
+              </span>
+              <p className="text-slate-600 text-sm font-medium">Listening</p>
+              <span className="text-slate-200">·</span>
+              <span className="text-slate-400 text-xs font-mono">{fmtTime(sessionTime)}</span>
             </div>
             <button onClick={handleToggle}
               className="text-[12px] text-slate-400 hover:text-slate-600 transition-colors font-medium underline underline-offset-2 decoration-slate-200 hover:decoration-slate-400">
