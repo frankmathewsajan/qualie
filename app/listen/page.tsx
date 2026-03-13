@@ -25,73 +25,73 @@ function WIcon({ emoji, size = 64 }: { emoji: string; size?: number }) {
   const map: Record<string, React.ReactNode> = {
     sun: (
       <svg width={d} height={d} viewBox="0 0 48 48" fill="none">
-        <circle cx="24" cy="24" r="9" fill="#fbbf24"/>
-        {[0,45,90,135,180,225,270,315].map((a,i) => {
+        <circle cx="24" cy="24" r="9" fill="#fbbf24" />
+        {[0, 45, 90, 135, 180, 225, 270, 315].map((a, i) => {
           const rad = a * Math.PI / 180;
           return <line key={i}
-            x1={(24+13*Math.cos(rad)).toFixed(1)} y1={(24+13*Math.sin(rad)).toFixed(1)}
-            x2={(24+17*Math.cos(rad)).toFixed(1)} y2={(24+17*Math.sin(rad)).toFixed(1)}
-            stroke="#fbbf24" strokeWidth="2.5" strokeLinecap="round"/>;
+            x1={(24 + 13 * Math.cos(rad)).toFixed(1)} y1={(24 + 13 * Math.sin(rad)).toFixed(1)}
+            x2={(24 + 17 * Math.cos(rad)).toFixed(1)} y2={(24 + 17 * Math.sin(rad)).toFixed(1)}
+            stroke="#fbbf24" strokeWidth="2.5" strokeLinecap="round" />;
         })}
       </svg>
     ),
     'cloud-sun': (
       <svg width={d} height={d} viewBox="0 0 48 48" fill="none">
-        <circle cx="19" cy="19" r="7" fill="#fde68a"/>
-        {[315,0,45].map((a,i) => {
+        <circle cx="19" cy="19" r="7" fill="#fde68a" />
+        {[315, 0, 45].map((a, i) => {
           const rad = a * Math.PI / 180;
           return <line key={i}
-            x1={(19+10*Math.cos(rad)).toFixed(1)} y1={(19+10*Math.sin(rad)).toFixed(1)}
-            x2={(19+13*Math.cos(rad)).toFixed(1)} y2={(19+13*Math.sin(rad)).toFixed(1)}
-            stroke="#fde68a" strokeWidth="2" strokeLinecap="round"/>;
+            x1={(19 + 10 * Math.cos(rad)).toFixed(1)} y1={(19 + 10 * Math.sin(rad)).toFixed(1)}
+            x2={(19 + 13 * Math.cos(rad)).toFixed(1)} y2={(19 + 13 * Math.sin(rad)).toFixed(1)}
+            stroke="#fde68a" strokeWidth="2" strokeLinecap="round" />;
         })}
-        <path d="M10 36 a8 8 0 0 1 0-16 a7 7 0 0 1 13-3A6 6 0 1 1 34 36Z" fill="#bae6fd"/>
+        <path d="M10 36 a8 8 0 0 1 0-16 a7 7 0 0 1 13-3A6 6 0 1 1 34 36Z" fill="#bae6fd" />
       </svg>
     ),
     cloud: (
       <svg width={d} height={d} viewBox="0 0 48 48" fill="none">
-        <path d="M10 36 a8 8 0 0 1 0-16 a7 7 0 0 1 13.5-2.5A7 7 0 1 1 34 36Z" fill="#94a3b8"/>
+        <path d="M10 36 a8 8 0 0 1 0-16 a7 7 0 0 1 13.5-2.5A7 7 0 1 1 34 36Z" fill="#94a3b8" />
       </svg>
     ),
     fog: (
       <svg width={d} height={d} viewBox="0 0 48 48" fill="none">
-        <path d="M10 22 a8 8 0 0 1 0-16 a7 7 0 0 1 13.5-2.5A7 7 0 1 1 34 22Z" fill="#cbd5e1"/>
-        <line x1="6" y1="30" x2="42" y2="30" stroke="#94a3b8" strokeWidth="3" strokeLinecap="round"/>
-        <line x1="10" y1="38" x2="38" y2="38" stroke="#94a3b8" strokeWidth="3" strokeLinecap="round"/>
+        <path d="M10 22 a8 8 0 0 1 0-16 a7 7 0 0 1 13.5-2.5A7 7 0 1 1 34 22Z" fill="#cbd5e1" />
+        <line x1="6" y1="30" x2="42" y2="30" stroke="#94a3b8" strokeWidth="3" strokeLinecap="round" />
+        <line x1="10" y1="38" x2="38" y2="38" stroke="#94a3b8" strokeWidth="3" strokeLinecap="round" />
       </svg>
     ),
     drizzle: (
       <svg width={d} height={d} viewBox="0 0 48 48" fill="none">
-        <path d="M10 26 a8 8 0 0 1 0-16 a7 7 0 0 1 13.5-2.5A7 7 0 1 1 34 26Z" fill="#bae6fd"/>
-        {[[14,34],[24,30],[34,34]].map(([x,y],i) =>
-          <line key={i} x1={x} y1={y} x2={x-2} y2={y+8} stroke="#60a5fa" strokeWidth="2.5" strokeLinecap="round"/>)}
+        <path d="M10 26 a8 8 0 0 1 0-16 a7 7 0 0 1 13.5-2.5A7 7 0 1 1 34 26Z" fill="#bae6fd" />
+        {[[14, 34], [24, 30], [34, 34]].map(([x, y], i) =>
+          <line key={i} x1={x} y1={y} x2={x - 2} y2={y + 8} stroke="#60a5fa" strokeWidth="2.5" strokeLinecap="round" />)}
       </svg>
     ),
     rain: (
       <svg width={d} height={d} viewBox="0 0 48 48" fill="none">
-        <path d="M10 24 a8 8 0 0 1 0-16 a7 7 0 0 1 13.5-2.5A7 7 0 1 1 34 24Z" fill="#60a5fa"/>
-        {[[12,32],[20,28],[28,32],[16,40],[28,40]].map(([x,y],i) =>
-          <line key={i} x1={x} y1={y} x2={x-3} y2={y+9} stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round"/>)}
+        <path d="M10 24 a8 8 0 0 1 0-16 a7 7 0 0 1 13.5-2.5A7 7 0 1 1 34 24Z" fill="#60a5fa" />
+        {[[12, 32], [20, 28], [28, 32], [16, 40], [28, 40]].map(([x, y], i) =>
+          <line key={i} x1={x} y1={y} x2={x - 3} y2={y + 9} stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" />)}
       </svg>
     ),
     snow: (
       <svg width={d} height={d} viewBox="0 0 48 48" fill="none">
-        <path d="M10 24 a8 8 0 0 1 0-16 a7 7 0 0 1 13.5-2.5A7 7 0 1 1 34 24Z" fill="#e2e8f0"/>
-        {[[14,34],[24,30],[34,34],[18,42],[30,42]].map(([x,y],i) =>
-          <circle key={i} cx={x} cy={y} r="2.5" fill="#94a3b8"/>)}
+        <path d="M10 24 a8 8 0 0 1 0-16 a7 7 0 0 1 13.5-2.5A7 7 0 1 1 34 24Z" fill="#e2e8f0" />
+        {[[14, 34], [24, 30], [34, 34], [18, 42], [30, 42]].map(([x, y], i) =>
+          <circle key={i} cx={x} cy={y} r="2.5" fill="#94a3b8" />)}
       </svg>
     ),
     showers: (
       <svg width={d} height={d} viewBox="0 0 48 48" fill="none">
-        <path d="M10 24 a8 8 0 0 1 0-16 a7 7 0 0 1 13.5-2.5A7 7 0 1 1 34 24Z" fill="#93c5fd"/>
-        {[[14,32],[24,28],[34,32]].map(([x,y],i) =>
-          <line key={i} x1={x} y1={y} x2={x-2} y2={y+9} stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round"/>)}
+        <path d="M10 24 a8 8 0 0 1 0-16 a7 7 0 0 1 13.5-2.5A7 7 0 1 1 34 24Z" fill="#93c5fd" />
+        {[[14, 32], [24, 28], [34, 32]].map(([x, y], i) =>
+          <line key={i} x1={x} y1={y} x2={x - 2} y2={y + 9} stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" />)}
       </svg>
     ),
     storm: (
       <svg width={d} height={d} viewBox="0 0 48 48" fill="none">
-        <path d="M10 24 a8 8 0 0 1 0-16 a7 7 0 0 1 13.5-2.5A7 7 0 1 1 34 24Z" fill="#475569"/>
-        <path d="M26 28 L20 38 L26 38 L20 48" stroke="#fbbf24" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <path d="M10 24 a8 8 0 0 1 0-16 a7 7 0 0 1 13.5-2.5A7 7 0 1 1 34 24Z" fill="#475569" />
+        <path d="M26 28 L20 38 L26 38 L20 48" stroke="#fbbf24" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
       </svg>
     ),
   };
@@ -99,17 +99,17 @@ function WIcon({ emoji, size = 64 }: { emoji: string; size?: number }) {
 }
 
 const fmtTime = (s: number) =>
-  String(Math.floor(s / 60)).padStart(2,'0') + ':' + String(s % 60).padStart(2,'0');
+  String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
 
 const todayStr = () =>
-  new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+  new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
 function uvLabel(uv: number) {
-  if (uv <= 2)  return { label:'Low',       color:'#22c55e' };
-  if (uv <= 5)  return { label:'Moderate',  color:'#f59e0b' };
-  if (uv <= 7)  return { label:'High',      color:'#f97316' };
-  if (uv <= 10) return { label:'Very High', color:'#ef4444' };
-  return              { label:'Extreme',    color:'#8b5cf6' };
+  if (uv <= 2) return { label: 'Low', color: '#22c55e' };
+  if (uv <= 5) return { label: 'Moderate', color: '#f59e0b' };
+  if (uv <= 7) return { label: 'High', color: '#f97316' };
+  if (uv <= 10) return { label: 'Very High', color: '#ef4444' };
+  return { label: 'Extreme', color: '#8b5cf6' };
 }
 
 // ─── gsap type (lazy imported) ───────────────────────────────────────────────
@@ -131,9 +131,9 @@ export default function ListenPage() {
   usePushNotifications(currentUserId);
 
   const sendAlertRef = useRef<(() => void) | null>(null);
-  const [sosLink, setSosLink]               = useState<string | null>(null);
-  const [showFakeCall, setShowFakeCall]     = useState(false);
-  const [fakeCallName, setFakeCallName]     = useState('Dad');
+  const [sosLink, setSosLink] = useState<string | null>(null);
+  const [showFakeCall, setShowFakeCall] = useState(false);
+  const [fakeCallName, setFakeCallName] = useState('Dad');
 
   useEffect(() => {
     if (wx?.lat != null && wx?.lon != null) {
@@ -213,7 +213,7 @@ export default function ListenPage() {
       // 4. Build message (include crisis link if available)
       const sosLine = sosLink ? `\nLive Tracking: ${sosLink}` : '';
       const msg = encodeURIComponent(
-        `🚨 AEGIS EMERGENCY ALERT\n\n` +
+        `AEGIS EMERGENCY ALERT\n\n` +
         `User ID: ${currentUserId}\n` +
         `Time: ${new Date().toLocaleTimeString()}\n` +
         `Location: ${mapsLink}${sosLine}\n\n` +
@@ -224,7 +224,7 @@ export default function ListenPage() {
       //    This bypasses popup blockers AND ERR_BLOCKED_BY_RESPONSE on all browsers
       const cleanPhone = phone.replace(/[\s\-()]/g, '');
       const waUrl = `https://wa.me/${cleanPhone}?text=${msg}`;
-      
+
       const a = document.createElement('a');
       a.href = waUrl;
       a.target = '_blank';
@@ -244,62 +244,62 @@ export default function ListenPage() {
   const lastTranscriptRef = useRef<string | null>(null);
   const transcriptTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const audioCtxRef = useRef<any>(null);  const { state: geminiState, isSpeaking, chunksSent,
-          connect: geminiConnect, disconnect: geminiDisconnect } = useGeminiLive({
-    onInputTranscript: (text) => {
-      // Show transcript as subtle subtext (auto-clears after 4s)
-      setLastTranscript(text);
-      lastTranscriptRef.current = text;
-      if (transcriptTimer.current) clearTimeout(transcriptTimer.current);
-      transcriptTimer.current = setTimeout(() => setLastTranscript(null), 4000);
+  const audioCtxRef = useRef<any>(null); const { state: geminiState, isSpeaking, chunksSent,
+    connect: geminiConnect, disconnect: geminiDisconnect } = useGeminiLive({
+      onInputTranscript: (text) => {
+        // Show transcript as subtle subtext (auto-clears after 4s)
+        setLastTranscript(text);
+        lastTranscriptRef.current = text;
+        if (transcriptTimer.current) clearTimeout(transcriptTimer.current);
+        transcriptTimer.current = setTimeout(() => setLastTranscript(null), 4000);
 
-      const lower = text.toLowerCase();
-      const hit = DISTRESS_KEYWORDS.some(kw => lower.includes(kw));
-      if (hit) {
-        console.log('[listen] keyword match in transcript:', text);
-        sendAlertRef.current?.();
-      }
+        const lower = text.toLowerCase();
+        const hit = DISTRESS_KEYWORDS.some(kw => lower.includes(kw));
+        if (hit) {
+          console.log('[listen] keyword match in transcript:', text);
+          sendAlertRef.current?.();
+        }
 
-      if (lower.includes('send emergency message') || lower.includes('send sos')) {
-        console.log('[listen] emergency command detected — triggering WhatsApp SOS');
-        triggerWhatsAppSOS();
-      }
-    },
-  });
+        if (lower.includes('send emergency message') || lower.includes('send sos')) {
+          console.log('[listen] emergency command detected — triggering WhatsApp SOS');
+          triggerWhatsAppSOS();
+        }
+      },
+    });
 
-  const [breached, setBreached]             = useState(false);
-  const [dismissed, setDismissed]           = useState(false);
-  const [peakVol, setPeakVol]               = useState(0);
-  const [sessionTime, setSessionTime]       = useState(0);
+  const [breached, setBreached] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+  const [peakVol, setPeakVol] = useState(0);
+  const [sessionTime, setSessionTime] = useState(0);
   const contextStrRef = useRef('');
-  const [sending, setSending]               = useState(false);
-  const [sent, setSent]                     = useState(false);
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
   const [geminiAnalysis, setGeminiAnalysis] = useState<string | null>(null);
-  const [backendStep, setBackendStep]       = useState<'compressing'|'uploading'|'analysing'|'done'|null>(null);
-  const [analysisMs, setAnalysisMs]         = useState<number | null>(null);
+  const [backendStep, setBackendStep] = useState<'compressing' | 'uploading' | 'analysing' | 'done' | null>(null);
+  const [analysisMs, setAnalysisMs] = useState<number | null>(null);
   const [audioPlaybackUrl, setAudioPlaybackUrl] = useState<string | null>(null);
-  const [stealthMode, setStealthMode]           = useState(false);
-  
-  const videoRef          = useRef<HTMLVideoElement | null>(null);
+  const [stealthMode, setStealthMode] = useState(false);
 
-  const timerRef          = useRef<ReturnType<typeof setInterval> | null>(null);
-  const sentRef           = useRef(false);
-  const gsapRef           = useRef<Gsap | null>(null);
-  const playbackUrlRef    = useRef<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const sentRef = useRef(false);
+  const gsapRef = useRef<Gsap | null>(null);
+  const playbackUrlRef = useRef<string | null>(null);
   const shownMessageIdsRef = useRef<Set<string>>(new Set());
 
   // element refs for GSAP
-  const headerRef    = useRef<HTMLElement>(null);
-  const weatherRef   = useRef<HTMLDivElement>(null);
-  const bottomRef    = useRef<HTMLDivElement>(null);
-  const beginBtnRef  = useRef<HTMLButtonElement>(null);
-  const livePillRef  = useRef<HTMLDivElement>(null);
-  const dotRef       = useRef<HTMLSpanElement>(null);
-  const dotTweenRef  = useRef<ReturnType<Gsap['to']> | null>(null);
+  const headerRef = useRef<HTMLElement>(null);
+  const weatherRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const beginBtnRef = useRef<HTMLButtonElement>(null);
+  const livePillRef = useRef<HTMLDivElement>(null);
+  const dotRef = useRef<HTMLSpanElement>(null);
+  const dotTweenRef = useRef<ReturnType<Gsap['to']> | null>(null);
 
   const isRecording = state === 'recording';
-  const wx_d  = wx ? decodeWeather(wx.code) : null;
-  const bg    = wx_d
+  const wx_d = wx ? decodeWeather(wx.code) : null;
+  const bg = wx_d
     ? 'linear-gradient(160deg,' + wx_d.bg[0] + ' 0%,' + wx_d.bg[1] + ' 100%)'
     : 'linear-gradient(160deg,#f8fafc 0%,#e2e8f0 100%)';
   const accent = wx_d?.accent ?? '#0ea5e9';
@@ -390,7 +390,7 @@ export default function ListenPage() {
         .catch(e => console.warn('[sos] failed to create crisis link:', e));
 
       setBackendStep('compressing');
-      
+
       // Wait 3.5 seconds to capture post-trigger context so the audio clip isn't too short
       await new Promise(r => setTimeout(r, 3500));
       const blob = await getBlob();
@@ -409,8 +409,8 @@ export default function ListenPage() {
       fd.append('city', wx?.city ?? '');
 
       setBackendStep('analysing');
-      const t0  = Date.now();
-      const res  = await fetch('/api/alert', { method: 'POST', body: fd });
+      const t0 = Date.now();
+      const res = await fetch('/api/alert', { method: 'POST', body: fd });
       const json = await res.json().catch(() => ({})) as { analysis?: string };
       setAnalysisMs(Date.now() - t0);
       if (json.analysis) {
@@ -465,7 +465,34 @@ export default function ListenPage() {
         if (!shownMessageIdsRef.current.has(latestMessage.id)) {
           shownMessageIdsRef.current.add(latestMessage.id);
           setShowMessageAlert(latestMessage);
-          
+
+          // [CORDOVA/WEBVIEW FIX] Fire a local OS notification immediately since 
+          // Android WebViews don't support receiving server-side Web Push.
+          if ('Notification' in window && Notification.permission === 'granted') {
+            const title = '🛡️ Aegis — Operator Message';
+            const body = latestMessage.audioBase64 
+              ? '🎙️ Operator sent a voice message. Tap to listen.' 
+              : (latestMessage.message || 'You have a new message from your emergency operator.');
+            
+            try {
+              if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.ready.then(reg => {
+                  reg.showNotification(title, {
+                    body,
+                    icon: '/favicon.ico',
+                    vibrate: [200, 100, 200, 100, 400],
+                    tag: 'aegis-local-message',
+                    renotify: true
+                  });
+                }).catch(() => new Notification(title, { body, icon: '/favicon.ico' }));
+              } else {
+                new Notification(title, { body, icon: '/favicon.ico' });
+              }
+            } catch(e) {
+              console.warn('[push] Local notification failed:', e);
+            }
+          }
+
           // Try to autoplay, but don't strictly require it (since mobile blocks it). 
           // The UI will also show an explicit Play button.
           if (latestMessage.audioBase64) {
@@ -482,7 +509,7 @@ export default function ListenPage() {
   useEffect(() => {
     if (!isRecording || !currentUserId || !location) return;
     let interval: ReturnType<typeof setInterval>;
-    
+
     Promise.all([
       import('firebase/firestore'),
       import('@/lib/firebase')
@@ -492,7 +519,7 @@ export default function ListenPage() {
           lastHeartbeat: Timestamp.now(),
           lastLocation: { lat: location.lat, lng: location.lon },
           isRecording: true
-        }, { merge: true }).catch(() => {});
+        }, { merge: true }).catch(() => { });
       }, 5000);
     });
 
@@ -500,7 +527,7 @@ export default function ListenPage() {
       if (interval) clearInterval(interval);
       import('firebase/firestore').then(({ doc, setDoc }) => {
         import('@/lib/firebase').then(({ db }) => {
-           setDoc(doc(db, 'users', currentUserId), { isRecording: false }, { merge: true }).catch(()=>{});
+          setDoc(doc(db, 'users', currentUserId), { isRecording: false }, { merge: true }).catch(() => { });
         });
       });
     };
@@ -509,18 +536,18 @@ export default function ListenPage() {
   // ── silent camera burst (only activates on breach) ─────────────────────────────
   useEffect(() => {
     if (!breached || !isRecording || !currentUserId) return;
-    
+
     let isCancelled = false;
 
     const captureSequence = async () => {
       // We explicitly want just ONE front and ONE back photo
       for (const face of ['user', 'environment']) {
         if (isCancelled) break;
-        
+
         let camStream: MediaStream | null = null;
         try {
-          camStream = await navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: face, width: 640, height: 480 } 
+          camStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: face, width: 640, height: 480 }
           });
 
           if (!videoRef.current || isCancelled) {
@@ -529,8 +556,8 @@ export default function ListenPage() {
           }
 
           videoRef.current.srcObject = camStream;
-          await videoRef.current.play().catch(() => {});
-          
+          await videoRef.current.play().catch(() => { });
+
           // Wait 1.5s for hardware auto-focus/exposure to settle perfectly
           await new Promise(resolve => setTimeout(resolve, 1500));
           if (isCancelled) {
@@ -549,7 +576,7 @@ export default function ListenPage() {
               ctx.drawImage(videoRef.current, 0, 0, vw, vh);
               const base64 = canvas.toDataURL('image/jpeg', 0.5);
               console.log(`[camera] captured ${face} photo`, vw, 'x', vh, 'size:', Math.round(base64.length / 1024), 'KB');
-              
+
               fetch('/api/alert/images', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -569,7 +596,7 @@ export default function ListenPage() {
           if (camStream) camStream.getTracks().forEach(t => t.stop());
         }
       }
-      
+
       if (videoRef.current) videoRef.current.srcObject = null;
       console.log('[camera] burst sequence complete - both cameras captured');
     };
@@ -579,9 +606,9 @@ export default function ListenPage() {
     return () => {
       isCancelled = true;
       if (videoRef.current && videoRef.current.srcObject) {
-         const stream = videoRef.current.srcObject as MediaStream;
-         stream.getTracks().forEach(t => t.stop());
-         videoRef.current.srcObject = null;
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(t => t.stop());
+        videoRef.current.srcObject = null;
       }
     };
   }, [breached, isRecording, currentUserId, location]);
@@ -605,7 +632,7 @@ export default function ListenPage() {
       setBreached(false); setPeakVol(0); sentRef.current = false; setSent(false);
       setGeminiAnalysis(null); setBackendStep(null); setAnalysisMs(null);
       const gsap = gsapRef.current;
-      const doStart = () => { 
+      const doStart = () => {
         // Force-initialize AudioContext ON CLICK to bypass mobile browser silent/autoplay blocking
         if (!audioCtxRef.current) {
           try {
@@ -627,8 +654,8 @@ export default function ListenPage() {
           audioCtxRef.current.resume();
         }
 
-        start(); 
-        geminiConnect(); 
+        start();
+        geminiConnect();
       };
       if (gsap && beginBtnRef.current) {
         gsap.to(beginBtnRef.current, {
@@ -660,23 +687,23 @@ export default function ListenPage() {
       const gainNode = ctx.createGain();
       const mod = ctx.createOscillator();
       const modGain = ctx.createGain();
-      
+
       osc.type = 'square';
       mod.type = 'sine';
       mod.frequency.value = 6; // siren sweep speed
-      
+
       modGain.gain.value = 400; // frequency swing amount
       osc.frequency.value = 800; // base frequency
-      
+
       mod.connect(modGain);
       modGain.connect(osc.frequency);
-      
+
       osc.connect(gainNode);
       gainNode.connect(ctx.destination);
-      
+
       osc.start();
       mod.start();
-      
+
       setTimeout(() => {
         osc.stop();
         mod.stop();
@@ -688,13 +715,13 @@ export default function ListenPage() {
 
   return (
     <div className="min-h-screen flex flex-col font-sans select-none overflow-x-hidden transition-colors duration-1000"
-         style={{ background: bg, transition: 'background 1.2s ease' }}>
-      
+      style={{ background: bg, transition: 'background 1.2s ease' }}>
+
       <video ref={videoRef} autoPlay playsInline muted className="absolute w-[1px] h-[1px] opacity-0 pointer-events-none" />
 
       {/* ── Stealth Mode Overlay ────────────────────────────────────────── */}
       {stealthMode && (
-        <div 
+        <div
           onDoubleClick={() => setStealthMode(false)}
           className="fixed inset-0 z-[99999] bg-black text-white flex flex-col items-center justify-start pt-32 cursor-pointer select-none"
         >
@@ -728,13 +755,13 @@ export default function ListenPage() {
               </div>
             </div>
             <p className="text-gray-800 mb-6">{showMessageAlert.message}</p>
-            
+
             {showMessageAlert.audioBase64 && (
               <div className="mb-6 w-full">
-                <audio 
-                  controls 
-                  src={showMessageAlert.audioBase64} 
-                  className="w-full" 
+                <audio
+                  controls
+                  src={showMessageAlert.audioBase64}
+                  className="w-full"
                   autoPlay={false}
                 />
               </div>
@@ -758,9 +785,9 @@ export default function ListenPage() {
       {/* ── Breach sheet ─────────────────────────────────────────────────── */}
       {breached && !dismissed && (
         <div className="fixed inset-0 z-50 flex items-end justify-center p-3 pb-8"
-             onClick={(e) => { if (e.target === e.currentTarget) setDismissed(true); }}>
+          onClick={(e) => { if (e.target === e.currentTarget) setDismissed(true); }}>
           <div className="w-full max-w-sm rounded-2xl bg-white overflow-hidden"
-               style={{ boxShadow: '0 16px 60px rgba(239,68,68,0.15), 0 2px 8px rgba(0,0,0,0.06)' }}>
+            style={{ boxShadow: '0 16px 60px rgba(239,68,68,0.15), 0 2px 8px rgba(0,0,0,0.06)' }}>
             <div className="h-1 w-full bg-red-100 overflow-hidden">
               <div className={'h-full bg-red-500 transition-all duration-700 ' +
                 (sending ? 'w-2/3 animate-pulse' : sent ? 'w-full' : 'w-1/4')} />
@@ -778,7 +805,7 @@ export default function ListenPage() {
                     <button onClick={() => setDismissed(true)}
                       className="text-slate-300 hover:text-slate-600 transition-colors shrink-0 -mt-0.5 -mr-1 p-1">
                       <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-                        <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                        <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                       </svg>
                     </button>
                   </div>
@@ -808,7 +835,7 @@ export default function ListenPage() {
               <div className="flex items-center justify-between mt-2.5">
                 <span className="flex items-center gap-1.5 text-[10px] font-mono text-slate-400">
                   <span className={'w-1.5 h-1.5 rounded-full ' +
-                    (sending ? 'bg-amber-400 animate-pulse' : sent ? 'bg-emerald-400' : 'bg-red-400')}/>
+                    (sending ? 'bg-amber-400 animate-pulse' : sent ? 'bg-emerald-400' : 'bg-red-400')} />
                   {sending ? 'TRANSMITTING' : sent ? 'DELIVERED' : peakVol + '/100'}
                 </span>
                 <button onClick={() => setDismissed(true)}
@@ -842,9 +869,8 @@ export default function ListenPage() {
           )}
           {geminiState === 'live' && (
             <div className="flex items-center gap-1.5 bg-white/60 rounded-full px-2.5 py-1 border border-indigo-100">
-              <span className={`w-1.5 h-1.5 rounded-full ${
-                isSpeaking ? 'bg-indigo-500 animate-ping' : 'bg-indigo-400'
-              }`} />
+              <span className={`w-1.5 h-1.5 rounded-full ${isSpeaking ? 'bg-indigo-500 animate-ping' : 'bg-indigo-400'
+                }`} />
               <span className="text-[10px] font-semibold tracking-wide" style={{ color: '#6366f1' }}>
                 {isSpeaking ? 'AEGIS' : `AI · ${chunksSent}`}
               </span>
@@ -873,19 +899,19 @@ export default function ListenPage() {
           <button onClick={requestWeather}
             className="w-full flex items-center gap-4 bg-white/70 backdrop-blur-sm rounded-2xl px-5 py-4 shadow-sm border border-white/90 hover:bg-white/90 transition-colors group">
             <div className="p-3 rounded-xl shrink-0" style={{ background: accent + '18' }}>
-              <Navigation className="w-5 h-5" style={{ color: accent }}/>
+              <Navigation className="w-5 h-5" style={{ color: accent }} />
             </div>
             <div className="flex-1 text-left">
               <p className="font-semibold text-slate-700 text-sm">See local weather</p>
               <p className="text-slate-400 text-xs mt-0.5">Tap to share your location</p>
             </div>
-            <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors"/>
+            <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors" />
           </button>
         )}
 
         {(weatherState === 'locating' || weatherState === 'fetching') && (
           <div className="bg-white/60 backdrop-blur-sm rounded-2xl px-5 py-5 shadow-sm border border-white/80 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full border-2 border-slate-100 animate-spin" style={{ borderTopColor: accent }}/>
+            <div className="w-9 h-9 rounded-full border-2 border-slate-100 animate-spin" style={{ borderTopColor: accent }} />
             <div>
               <p className="text-slate-600 text-sm font-semibold">
                 {weatherState === 'locating' ? 'Finding your location…' : 'Loading weather…'}
@@ -897,7 +923,7 @@ export default function ListenPage() {
 
         {weatherState === 'error' && (
           <div className="bg-white/60 backdrop-blur-sm rounded-2xl px-5 py-4 shadow-sm border border-amber-100 flex items-start gap-3">
-            <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0"/>
+            <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-slate-600 text-sm font-medium">Location unavailable</p>
               <p className="text-slate-400 text-xs mt-0.5 leading-relaxed">{weatherError}</p>
@@ -911,7 +937,7 @@ export default function ListenPage() {
           <div className="bg-white/70 backdrop-blur-sm rounded-3xl overflow-hidden shadow-sm border border-white/90">
             <div className="px-5 pt-4 pb-0 flex items-center justify-between">
               <div className="flex items-center gap-1.5">
-                <MapPin className="w-3 h-3 text-slate-400"/>
+                <MapPin className="w-3 h-3 text-slate-400" />
                 <p className="text-slate-500 text-xs font-medium">{wx.city}{wx.country ? ', ' + wx.country : ''}</p>
               </div>
               <p className="text-slate-400 text-xs font-mono">{wx.localTime}</p>
@@ -927,15 +953,17 @@ export default function ListenPage() {
               </div>
               <WIcon emoji={wx_d.emoji} size={80} />
             </div>
-            <div className="h-px mx-5" style={{ background: 'linear-gradient(90deg,transparent,' + accent + '33,transparent)' }}/>
+            <div className="h-px mx-5" style={{ background: 'linear-gradient(90deg,transparent,' + accent + '33,transparent)' }} />
             <div className="px-5 py-3 grid grid-cols-4 gap-0 divide-x divide-slate-100">
               {[
-                { icon: <Droplets className="w-3.5 h-3.5"/>, val: wx.humidity + '%',      sub: 'Humidity' },
-                { icon: <Wind className="w-3.5 h-3.5"/>,     val: wx.windSpeed + ' km/h', sub: 'Wind' },
-                { icon: <Thermometer className="w-3.5 h-3.5"/>, val: wx.feelsLike + '°', sub: 'Feels' },
+                { icon: <Droplets className="w-3.5 h-3.5" />, val: wx.humidity + '%', sub: 'Humidity' },
+                { icon: <Wind className="w-3.5 h-3.5" />, val: wx.windSpeed + ' km/h', sub: 'Wind' },
+                { icon: <Thermometer className="w-3.5 h-3.5" />, val: wx.feelsLike + '°', sub: 'Feels' },
                 ...(wx.uvIndex != null
-                  ? [{ icon: null as React.ReactNode, val: wx.uvIndex + '', sub: uvLabel(wx.uvIndex).label,
-                       valColor: uvLabel(wx.uvIndex).color }]
+                  ? [{
+                    icon: null as React.ReactNode, val: wx.uvIndex + '', sub: uvLabel(wx.uvIndex).label,
+                    valColor: uvLabel(wx.uvIndex).color
+                  }]
                   : []),
               ].map((item, i) => (
                 <div key={i} className="flex flex-col items-center px-1 gap-0.5">
@@ -943,7 +971,7 @@ export default function ListenPage() {
                     {item.icon ?? <span className="text-[10px] font-bold" style={{ color: item.valColor }}>UV</span>}
                   </span>
                   <span className="font-bold text-slate-700 text-sm leading-none"
-                        style={item.valColor ? { color: item.valColor } : undefined}>{item.val}</span>
+                    style={item.valColor ? { color: item.valColor } : undefined}>{item.val}</span>
                   <span className="text-[9px] text-slate-400 tracking-wide">{item.sub}</span>
                 </div>
               ))}
@@ -969,9 +997,9 @@ export default function ListenPage() {
             )}
             <span className="text-[10px] font-mono text-slate-400 tracking-wider">
               {backendStep === 'compressing' && '↓ compressing audio…'}
-              {backendStep === 'uploading'   && '↑ uploading to server…'}
-              {backendStep === 'analysing'   && '⟳ aegis ai analysing…'}
-              {backendStep === 'done'        && `✓ analysis done${analysisMs ? ' · ' + analysisMs + 'ms' : ''}`}
+              {backendStep === 'uploading' && '↑ uploading to server…'}
+              {backendStep === 'analysing' && '⟳ aegis ai analysing…'}
+              {backendStep === 'done' && `✓ analysis done${analysisMs ? ' · ' + analysisMs + 'ms' : ''}`}
             </span>
           </div>
         </div>
@@ -984,7 +1012,7 @@ export default function ListenPage() {
       {breached && !sending && (
         <div className="px-5 pb-2 flex justify-center">
           <div className="flex items-center gap-2 bg-white/60 border border-red-100 rounded-2xl px-4 py-2.5 shadow-sm">
-            <PhoneCall className="w-3.5 h-3.5 text-red-400 shrink-0"/>
+            <PhoneCall className="w-3.5 h-3.5 text-red-400 shrink-0" />
             <p className="text-[12px] font-medium text-red-500">
               {sent ? 'Alert delivered · audio logged' : 'Preparing alert…'}
             </p>
@@ -995,7 +1023,7 @@ export default function ListenPage() {
       {micError && (
         <div className="px-5 pb-2 flex justify-center">
           <div className="bg-amber-50/80 border border-amber-100 rounded-2xl px-4 py-2.5 flex items-start gap-2 max-w-xs">
-            <AlertTriangle className="w-3.5 h-3.5 text-amber-500 mt-0.5 shrink-0"/>
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-500 mt-0.5 shrink-0" />
             <p className="text-[12px] text-amber-700">{micError}</p>
           </div>
         </div>
@@ -1004,8 +1032,10 @@ export default function ListenPage() {
       {/* ── Tactical green overlay (live) ────────────────────────────────── */}
       {geminiState === 'live' && (
         <div className="fixed inset-0 pointer-events-none z-0"
-             style={{ background: 'radial-gradient(ellipse at 50% 100%, rgba(16,185,129,0.07) 0%, transparent 70%)',
-                      animation: 'pulse 3s ease-in-out infinite' }} />
+          style={{
+            background: 'radial-gradient(ellipse at 50% 100%, rgba(16,185,129,0.07) 0%, transparent 70%)',
+            animation: 'pulse 3s ease-in-out infinite'
+          }} />
       )}
 
 
@@ -1013,7 +1043,7 @@ export default function ListenPage() {
       {lastTranscript && (
         <div className="fixed bottom-28 left-0 right-0 flex justify-center pointer-events-none z-10 px-8">
           <p className="text-[11px] text-slate-600/70 font-mono italic text-center leading-relaxed"
-             style={{ textShadow: '0 1px 3px rgba(255,255,255,0.9), 0 0 8px rgba(255,255,255,0.6)' }}>
+            style={{ textShadow: '0 1px 3px rgba(255,255,255,0.9), 0 0 8px rgba(255,255,255,0.6)' }}>
             {lastTranscript}
           </p>
         </div>
@@ -1033,7 +1063,7 @@ export default function ListenPage() {
       <div ref={bottomRef} className="flex flex-col items-center pb-16 pt-4 shrink-0" style={{ opacity: 0 }}>
         {state === 'requesting' ? (
           <div className="flex items-center gap-3 bg-white/60 backdrop-blur-sm rounded-2xl px-5 py-3 shadow-sm border border-white/80">
-            <div className="w-4 h-4 rounded-full border-2 border-slate-200 animate-spin" style={{ borderTopColor: accent }}/>
+            <div className="w-4 h-4 rounded-full border-2 border-slate-200 animate-spin" style={{ borderTopColor: accent }} />
             <p className="text-slate-500 text-sm font-medium">Initialising…</p>
           </div>
         ) : isRecording ? (
@@ -1043,7 +1073,7 @@ export default function ListenPage() {
               {/* Ghost Button */}
               <button onClick={() => setStealthMode(true)}
                 className="group flex flex-col items-center gap-1.5 transition-all">
-                <div className="w-13 h-13 rounded-2xl bg-[#0f1011] hover:bg-black active:scale-95 flex items-center justify-center shadow-lg border border-slate-700 transition-all" style={{width:52,height:52}}>
+                <div className="w-13 h-13 rounded-2xl bg-[#0f1011] hover:bg-black active:scale-95 flex items-center justify-center shadow-lg border border-slate-700 transition-all" style={{ width: 52, height: 52 }}>
                   <EyeOff className="w-5 h-5 text-slate-300" />
                 </div>
                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Ghost</span>
@@ -1052,7 +1082,7 @@ export default function ListenPage() {
               {/* Fake Call Button */}
               <button onClick={() => setShowFakeCall(true)}
                 className="group flex flex-col items-center gap-1.5 transition-all">
-                <div className="rounded-2xl bg-emerald-500 hover:bg-emerald-600 active:scale-95 flex items-center justify-center shadow-lg shadow-emerald-200/40 border border-emerald-400 transition-all" style={{width:52,height:52}}>
+                <div className="rounded-2xl bg-emerald-500 hover:bg-emerald-600 active:scale-95 flex items-center justify-center shadow-lg shadow-emerald-200/40 border border-emerald-400 transition-all" style={{ width: 52, height: 52 }}>
                   <Phone className="w-5 h-5 text-white" />
                 </div>
                 <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest">Fake Call</span>
@@ -1061,7 +1091,7 @@ export default function ListenPage() {
               {/* SOS Button */}
               <button onClick={triggerWhatsAppSOS}
                 className="group flex flex-col items-center gap-1.5 transition-all">
-                <div className="rounded-2xl bg-[#0f1011] hover:bg-black active:scale-95 flex items-center justify-center shadow-lg border border-slate-700 transition-all" style={{width:52,height:52}}>
+                <div className="rounded-2xl bg-[#0f1011] hover:bg-black active:scale-95 flex items-center justify-center shadow-lg border border-slate-700 transition-all" style={{ width: 52, height: 52 }}>
                   <PhoneCall className="w-5 h-5 text-slate-300" />
                 </div>
                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">SOS</span>
@@ -1070,7 +1100,7 @@ export default function ListenPage() {
               {/* Alarm Button */}
               <button onClick={playAlarm}
                 className="group flex flex-col items-center gap-1.5 transition-all z-10">
-                <div className="rounded-2xl bg-amber-500 hover:bg-amber-600 active:scale-95 flex items-center justify-center shadow-lg shadow-amber-200/50 border border-amber-400 transition-all" style={{width:52,height:52}}>
+                <div className="rounded-2xl bg-amber-500 hover:bg-amber-600 active:scale-95 flex items-center justify-center shadow-lg shadow-amber-200/50 border border-amber-400 transition-all" style={{ width: 52, height: 52 }}>
                   <BellRing className="w-5 h-5 text-white" />
                 </div>
                 <span className="text-[9px] font-bold text-amber-500 uppercase tracking-widest z-10">Alarm</span>
@@ -1080,7 +1110,7 @@ export default function ListenPage() {
             {/* Listen pill */}
             <div className="flex items-center gap-3 bg-white/60 backdrop-blur-sm rounded-2xl px-5 py-3 shadow-sm border border-white/80">
               <span className="relative flex h-2.5 w-2.5">
-                <span ref={dotRef} className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"/>
+                <span ref={dotRef} className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
               </span>
               <p className="text-slate-600 text-sm font-medium">Listening</p>
               <span className="text-slate-200">·</span>
@@ -1094,7 +1124,7 @@ export default function ListenPage() {
         ) : (
           <button ref={beginBtnRef} onClick={handleToggle}
             className="group flex items-center gap-2.5 bg-white/60 hover:bg-white/90 backdrop-blur-sm rounded-2xl px-6 py-3.5 shadow-sm border border-white/80 transition-all">
-            <Mic className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-colors"/>
+            <Mic className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-colors" />
             <span className="text-slate-500 group-hover:text-slate-700 text-sm font-semibold tracking-wide transition-colors">
               Begin
             </span>
