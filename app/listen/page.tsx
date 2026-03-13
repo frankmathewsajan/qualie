@@ -265,6 +265,10 @@ export default function ListenPage() {
         }
 
         try {
+          if (ctx.state === 'suspended') {
+            ctx.resume();
+          }
+
           const osc = ctx.createOscillator();
           const gainNode = ctx.createGain();
           const mod = ctx.createOscillator();
@@ -316,6 +320,7 @@ export default function ListenPage() {
   const sentRef           = useRef(false);
   const gsapRef           = useRef<Gsap | null>(null);
   const playbackUrlRef    = useRef<string | null>(null);
+  const shownMessageIdsRef = useRef<Set<string>>(new Set());
 
   // element refs for GSAP
   const headerRef    = useRef<HTMLElement>(null);
@@ -475,7 +480,8 @@ export default function ListenPage() {
     if (messages.length > 0) {
       const latestMessage = messages[0];
       if (!latestMessage.acknowledged) {
-        if (!showMessageAlert || showMessageAlert.id !== latestMessage.id) {
+        if (!shownMessageIdsRef.current.has(latestMessage.id)) {
+          shownMessageIdsRef.current.add(latestMessage.id);
           setShowMessageAlert(latestMessage);
           
           // Try to autoplay, but don't strictly require it (since mobile blocks it). 
