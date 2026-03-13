@@ -113,8 +113,46 @@ type Gsap = typeof import('gsap')['gsap'];
 export default function ListenPage() {
   const { state, volume, error: micError, start, stop, getBlob } = useAudioMeter();
   const { weatherState, data: wx, weatherError, requestWeather } = useWeather();
+  const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
 
   const sendAlertRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    if (wx?.lat != null && wx?.lon != null) {
+      setLocation({ lat: wx.lat, lon: wx.lon });
+      setLocationError(null);
+    }
+  }, [wx?.lat, wx?.lon]);
+
+  const ensureLocation = useCallback(async () => {
+    if (location) return location;
+    if (!navigator?.geolocation) {
+      setLocationError('Geolocation is not supported in this browser.');
+      return null;
+    }
+
+    return new Promise<{ lat: number; lon: number } | null>((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const coords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+          setLocation(coords);
+          setLocationError(null);
+          resolve(coords);
+        },
+        (err) => {
+          const msgs: Record<number, string> = {
+            1: 'Location access denied. Enable it in browser settings.',
+            2: 'Location signal unavailable. Try moving to a window.',
+            3: 'Location request timed out. Try again.',
+          };
+          setLocationError(msgs[err.code] ?? 'Unable to get location.');
+          resolve(null);
+        },
+        { enableHighAccuracy: false, timeout: 12_000 }
+      );
+    });
+  }, [location]);
 
   const { state: geminiState, isSpeaking, chunksSent,
           connect: geminiConnect, disconnect: geminiDisconnect } = useGeminiLive({
@@ -228,7 +266,14 @@ export default function ListenPage() {
     setBreached(true);  // ensure breach sheet opens even on keyword-only trigger
     setDismissed(false);
     setBackendStep('compressing');
+
     try {
+      const loc = await ensureLocation();
+      if (!loc) {
+        setSending(false);
+        return;
+      }
+
       setBackendStep('compressing');
       const blob = await getBlob();
       // Save a local copy so the user can play it back
@@ -236,12 +281,14 @@ export default function ListenPage() {
       const objUrl = URL.createObjectURL(blob);
       playbackUrlRef.current = objUrl;
       setAudioPlaybackUrl(objUrl);
+
       setBackendStep('uploading');
       const fd = new FormData();
       fd.append('audio', blob, 'recording.webm');
       fd.append('volume', String(peakVol));
-      fd.append('location', JSON.stringify({ lat: wx?.lat, lon: wx?.lon }));
+      fd.append('location', JSON.stringify(loc));
       fd.append('city', wx?.city ?? '');
+
       setBackendStep('analysing');
       const t0  = Date.now();
       const res  = await fetch('/api/alert', { method: 'POST', body: fd });
@@ -256,7 +303,7 @@ export default function ListenPage() {
     } finally {
       setSending(false);
     }
-  }, [getBlob, peakVol, wx]);
+  }, [ensureLocation, getBlob, peakVol, wx]);
 
   // Keep a ref so the keyword callback (which is closed over at render time) can always call the latest sendAlert
   useEffect(() => { sendAlertRef.current = sendAlert; }, [sendAlert]);
@@ -502,6 +549,14 @@ export default function ListenPage() {
                   <span className="text-[9px] text-slate-400 tracking-wide">{item.sub}</span>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {locationError && (
+          <div className="px-5 pt-2">
+            <div className="bg-amber-50/80 border border-amber-100 rounded-2xl px-4 py-3 text-sm text-amber-700">
+              {locationError}
             </div>
           </div>
         )}

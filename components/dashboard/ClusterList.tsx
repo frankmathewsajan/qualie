@@ -32,6 +32,11 @@ export function ClusterList({ clusters }: ClusterListProps) {
             <p className="text-xs text-slate-500">
               Centroid: {cluster.centroid.lat.toFixed(4)}, {cluster.centroid.lng.toFixed(4)}
             </p>
+            {cluster.analyses && (
+              <p className="text-xs text-slate-300 mt-2">
+                Analysis: {cluster.analyses.length > 100 ? cluster.analyses.slice(0, 100) + '...' : cluster.analyses}
+              </p>
+            )}
           </div>
         ))
       )}

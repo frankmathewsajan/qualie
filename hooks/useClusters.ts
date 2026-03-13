@@ -8,6 +8,7 @@ export interface Cluster {
   confidence: number;
   eventTypes: string[];
   count: number;
+  analyses?: string;
 }
 
 export function useClusters() {

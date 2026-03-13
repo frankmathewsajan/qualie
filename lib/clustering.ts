@@ -10,21 +10,22 @@ export async function clusterAlerts() {
     orderBy('timestamp', 'desc')
   );
   const alerts = await getDocs(alertsQuery);
-  const alertData = alerts.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  const alertData = alerts.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) }));
 
   // Simple clustering: group by proximity (500m radius)
   const clusters = [];
   const processed = new Set();
 
   for (const alert of alertData) {
+    if (!alert.lat || !alert.lng) continue;
     if (processed.has(alert.id)) continue;
 
     const cluster = [alert];
     processed.add(alert.id);
 
     for (const other of alertData) {
+      if (!other.lat || !other.lng) continue;
       if (processed.has(other.id)) continue;
-      if (!alert.lat || !alert.lng || !other.lat || !other.lng) continue;
       const distance = getDistance(alert.lat, alert.lng, other.lat, other.lng);
       if (distance < 0.5) { // 500m
         cluster.push(other);
@@ -45,6 +46,7 @@ export async function clusterAlerts() {
         confidence: avgConfidence,
         eventTypes,
         count: cluster.length,
+        analyses: cluster.map(a => a.analysis || 'No analysis').join('; '),
       });
     }
   }
