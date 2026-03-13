@@ -7,7 +7,7 @@ runConfig:
   # cpu: 1
   # memoryMiB: 512
 
-# Environment variables and secrets.
+  # Environment variables and secrets.
 env:
   # Configure environment variables.
   # See https://firebase.google.com/docs/app-hosting/configure#user-defined-environment
@@ -40,3 +40,5 @@ env:
     value: "1:648232167531:web:8a8f975a8753ca5fb4a92e"
   - variable: NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
     value: AIzaSyDTqdI2XFApFV9PCvW1f1Yh5pOtuF838q0
+  - variable: VAPID_PRIVATE_KEY
+    secret: VtvEylFjnjfuSy77D9dA_vUY4U3ks23E7bgXmVKUEbo

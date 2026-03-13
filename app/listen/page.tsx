@@ -2,13 +2,15 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import {
   Mic, Home, PhoneCall, Droplets, Wind,
-  MapPin, AlertTriangle, Navigation, Thermometer, ChevronRight, Settings, EyeOff, BellRing
+  MapPin, AlertTriangle, Navigation, Thermometer, ChevronRight, Settings, EyeOff, BellRing, Phone
 } from 'lucide-react';
 import { useAudioMeter } from '@/hooks/useAudioMeter';
 import { useWeather, decodeWeather } from '@/hooks/useWeather';
 import { useGeminiLive } from '@/hooks/useGeminiLive';
 import { useAgencyMessages, AgencyMessage } from '@/hooks/useAgencyMessages';
 import { getUserId } from '@/lib/userId';
+import FakeCallOverlay from '@/components/FakeCallOverlay';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 import Link from 'next/link';
 
 const THRESHOLD = 65;
@@ -125,7 +127,13 @@ export default function ListenPage() {
   const { messages, unreadCount, acknowledgeMessage } = useAgencyMessages(currentUserId);
   const [showMessageAlert, setShowMessageAlert] = useState<AgencyMessage | null>(null);
 
+  // Register push notifications so operator messages arrive even when app is closed
+  usePushNotifications(currentUserId);
+
   const sendAlertRef = useRef<(() => void) | null>(null);
+  const [sosLink, setSosLink]               = useState<string | null>(null);
+  const [showFakeCall, setShowFakeCall]     = useState(false);
+  const [fakeCallName, setFakeCallName]     = useState('Dad');
 
   useEffect(() => {
     if (wx?.lat != null && wx?.lon != null) {
@@ -202,12 +210,13 @@ export default function ListenPage() {
         ? `https://maps.google.com/?q=${loc.lat},${loc.lon}`
         : '(location unavailable)';
 
-      // 4. Build message
+      // 4. Build message (include crisis link if available)
+      const sosLine = sosLink ? `\nLive Tracking: ${sosLink}` : '';
       const msg = encodeURIComponent(
         `🚨 AEGIS EMERGENCY ALERT\n\n` +
         `User ID: ${currentUserId}\n` +
         `Time: ${new Date().toLocaleTimeString()}\n` +
-        `Location: ${mapsLink}\n\n` +
+        `Location: ${mapsLink}${sosLine}\n\n` +
         `I may be in danger. Please check on me immediately.`
       );
 
@@ -229,7 +238,7 @@ export default function ListenPage() {
     } catch (error) {
       console.error('Error triggering WhatsApp SOS:', error);
     }
-  }, [currentUserId, location]);
+  }, [currentUserId, location, sosLink]);
 
   const [lastTranscript, setLastTranscript] = useState<string | null>(null);
   const lastTranscriptRef = useRef<string | null>(null);
@@ -364,6 +373,22 @@ export default function ListenPage() {
         return;
       }
 
+      // Create SOS crisis link in the background
+      fetch('/api/sos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUserId, lat: loc.lat, lng: loc.lon }),
+      })
+        .then(r => r.json())
+        .then(d => {
+          if (d.sessionId) {
+            const link = `${window.location.origin}/sos/${d.sessionId}`;
+            setSosLink(link);
+            console.log('[sos] Crisis link created:', link);
+          }
+        })
+        .catch(e => console.warn('[sos] failed to create crisis link:', e));
+
       setBackendStep('compressing');
       
       // Wait 3.5 seconds to capture post-trigger context so the audio clip isn't too short
@@ -400,7 +425,7 @@ export default function ListenPage() {
     } finally {
       setSending(false);
     }
-  }, [ensureLocation, getBlob, peakVol, wx]);
+  }, [ensureLocation, getBlob, peakVol, wx, currentUserId]);
 
   // Keep a ref so the keyword callback (which is closed over at render time) can always call the latest sendAlert
   useEffect(() => { sendAlertRef.current = sendAlert; }, [sendAlert]);
@@ -1014,32 +1039,41 @@ export default function ListenPage() {
         ) : isRecording ? (
           <div ref={livePillRef} className="flex flex-col items-center gap-6">
             {/* Tactical Buttons Row */}
-            <div className="flex items-center justify-center gap-6">
+            <div className="flex items-center justify-center gap-5">
               {/* Ghost Button */}
               <button onClick={() => setStealthMode(true)}
                 className="group flex flex-col items-center gap-1.5 transition-all">
-                <div className="w-14 h-14 rounded-2xl bg-[#0f1011] hover:bg-black active:scale-95 flex items-center justify-center shadow-lg border border-slate-700 transition-all">
+                <div className="w-13 h-13 rounded-2xl bg-[#0f1011] hover:bg-black active:scale-95 flex items-center justify-center shadow-lg border border-slate-700 transition-all" style={{width:52,height:52}}>
                   <EyeOff className="w-5 h-5 text-slate-300" />
                 </div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Ghost</span>
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Ghost</span>
+              </button>
+
+              {/* Fake Call Button */}
+              <button onClick={() => setShowFakeCall(true)}
+                className="group flex flex-col items-center gap-1.5 transition-all">
+                <div className="rounded-2xl bg-emerald-500 hover:bg-emerald-600 active:scale-95 flex items-center justify-center shadow-lg shadow-emerald-200/40 border border-emerald-400 transition-all" style={{width:52,height:52}}>
+                  <Phone className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest">Fake Call</span>
               </button>
 
               {/* SOS Button */}
               <button onClick={triggerWhatsAppSOS}
                 className="group flex flex-col items-center gap-1.5 transition-all">
-                <div className="w-14 h-14 rounded-2xl bg-[#0f1011] hover:bg-black active:scale-95 flex items-center justify-center shadow-lg border border-slate-700 transition-all">
+                <div className="rounded-2xl bg-[#0f1011] hover:bg-black active:scale-95 flex items-center justify-center shadow-lg border border-slate-700 transition-all" style={{width:52,height:52}}>
                   <PhoneCall className="w-5 h-5 text-slate-300" />
                 </div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">SOS</span>
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">SOS</span>
               </button>
 
               {/* Alarm Button */}
               <button onClick={playAlarm}
                 className="group flex flex-col items-center gap-1.5 transition-all z-10">
-                <div className="w-14 h-14 rounded-2xl bg-amber-500 hover:bg-amber-600 active:scale-95 flex items-center justify-center shadow-lg shadow-amber-200/50 border border-amber-400 transition-all">
+                <div className="rounded-2xl bg-amber-500 hover:bg-amber-600 active:scale-95 flex items-center justify-center shadow-lg shadow-amber-200/50 border border-amber-400 transition-all" style={{width:52,height:52}}>
                   <BellRing className="w-5 h-5 text-white" />
                 </div>
-                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest z-10">Alarm</span>
+                <span className="text-[9px] font-bold text-amber-500 uppercase tracking-widest z-10">Alarm</span>
               </button>
             </div>
 
@@ -1067,6 +1101,16 @@ export default function ListenPage() {
           </button>
         )}
       </div>
+
+      {/* ── Fake Call Overlay ──────────────────────────────────────────── */}
+      {showFakeCall && (
+        <FakeCallOverlay
+          callerName={fakeCallName}
+          callerLabel="Mobile"
+          onDismiss={() => setShowFakeCall(false)}
+          audioCtx={audioCtxRef.current}
+        />
+      )}
     </div>
   );
 }
