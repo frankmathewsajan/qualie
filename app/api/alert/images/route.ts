@@ -4,13 +4,14 @@ import { collection, addDoc, Timestamp } from 'firebase/firestore';
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId, imageBase64, lat, lng } = await req.json();
+    const { userId, imageBase64, lat, lng, context } = await req.json();
 
     await addDoc(collection(db, 'alert_images'), {
       userId,
       image: imageBase64,
       lat,
       lng,
+      context: context || '',
       timestamp: Timestamp.fromDate(new Date()),
     });
 

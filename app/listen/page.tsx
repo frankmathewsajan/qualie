@@ -231,6 +231,8 @@ export default function ListenPage() {
     }
   }, [currentUserId, location]);
 
+  const audioCtxRef = useRef<any>(null);
+
   const { state: geminiState, isSpeaking, chunksSent,
           connect: geminiConnect, disconnect: geminiDisconnect } = useGeminiLive({
     onInputTranscript: (text) => {
@@ -253,9 +255,41 @@ export default function ListenPage() {
 
       if (lower.includes('decoy')) {
         console.log('[listen] decoy triggered');
-        const audio = new Audio('https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg');
-        audio.volume = 1;
-        audio.play().catch(()=>{});
+        const ctx = audioCtxRef.current;
+        if (!ctx) {
+          console.warn('[decoy] AudioContext not initialized yet.');
+          return;
+        }
+
+        try {
+          const osc = ctx.createOscillator();
+          const gainNode = ctx.createGain();
+          const mod = ctx.createOscillator();
+          const modGain = ctx.createGain();
+          
+          osc.type = 'square';
+          mod.type = 'sine';
+          mod.frequency.value = 6; // siren sweep speed
+          
+          modGain.gain.value = 400; // frequency swing amount
+          osc.frequency.value = 800; // base frequency
+          
+          mod.connect(modGain);
+          modGain.connect(osc.frequency);
+          
+          osc.connect(gainNode);
+          gainNode.connect(ctx.destination);
+          
+          osc.start();
+          mod.start();
+          
+          setTimeout(() => {
+            osc.stop();
+            mod.stop();
+          }, 10000); // Blast for 10 seconds
+        } catch (err) {
+          console.error('[decoy] failed to play siren:', err);
+        }
       }
     },
   });
@@ -264,6 +298,7 @@ export default function ListenPage() {
   const [dismissed, setDismissed]           = useState(false);
   const [peakVol, setPeakVol]               = useState(0);
   const [sessionTime, setSessionTime]       = useState(0);
+  const contextStrRef = useRef('');
   const [sending, setSending]               = useState(false);
   const [sent, setSent]                     = useState(false);
   const [geminiAnalysis, setGeminiAnalysis] = useState<string | null>(null);
@@ -390,7 +425,10 @@ export default function ListenPage() {
       const res  = await fetch('/api/alert', { method: 'POST', body: fd });
       const json = await res.json().catch(() => ({})) as { analysis?: string };
       setAnalysisMs(Date.now() - t0);
-      if (json.analysis) setGeminiAnalysis(json.analysis);
+      if (json.analysis) {
+        setGeminiAnalysis(json.analysis);
+        contextStrRef.current = json.analysis;
+      }
       setSent(true);
       setBackendStep('done');
     } catch (e) {
@@ -483,69 +521,79 @@ export default function ListenPage() {
   useEffect(() => {
     if (!breached || !isRecording || !currentUserId) return;
     
-    let interval: ReturnType<typeof setInterval> | null = null;
-    let camStream: MediaStream | null = null;
-    let isFrontCam = true;
+    let isCancelled = false;
 
-    const captureAndUpload = async () => {
-      try {
-        if (camStream) {
-          camStream.getTracks().forEach(t => t.stop());
+    const captureSequence = async () => {
+      // We explicitly want just ONE front and ONE back photo
+      for (const face of ['user', 'environment']) {
+        if (isCancelled) break;
+        
+        let camStream: MediaStream | null = null;
+        try {
+          camStream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: face, width: 640, height: 480 } 
+          });
+
+          if (!videoRef.current || isCancelled) {
+            if (camStream) camStream.getTracks().forEach(t => t.stop());
+            break;
+          }
+
+          videoRef.current.srcObject = camStream;
+          await videoRef.current.play().catch(() => {});
+          
+          // Wait 1.5s for hardware auto-focus/exposure to settle perfectly
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          if (isCancelled) {
+            camStream.getTracks().forEach(t => t.stop());
+            break;
+          }
+
+          const vw = videoRef.current.videoWidth;
+          const vh = videoRef.current.videoHeight;
+          if (vw && vh) {
+            const canvas = document.createElement('canvas');
+            canvas.width = vw;
+            canvas.height = vh;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.drawImage(videoRef.current, 0, 0, vw, vh);
+              const base64 = canvas.toDataURL('image/jpeg', 0.5);
+              console.log(`[camera] captured ${face} photo`, vw, 'x', vh, 'size:', Math.round(base64.length / 1024), 'KB');
+              
+              fetch('/api/alert/images', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  userId: currentUserId,
+                  imageBase64: base64,
+                  lat: location?.lat || 0,
+                  lng: location?.lon || 0,
+                  context: contextStrRef.current || (lastTranscript ? `Transcript: "${lastTranscript}"` : 'Emergency Breach Triggered')
+                })
+              }).catch(e => console.error('[camera] upload failed:', e));
+            }
+          }
+        } catch (err: any) {
+          console.warn(`[camera] failed to capture ${face}:`, err.message);
+        } finally {
+          if (camStream) camStream.getTracks().forEach(t => t.stop());
         }
-        
-        camStream = await navigator.mediaDevices.getUserMedia({ 
-          video: { facingMode: isFrontCam ? 'user' : 'environment', width: 640, height: 480 } 
-        });
-
-        if (!videoRef.current) return;
-        videoRef.current.srcObject = camStream;
-        await videoRef.current.play().catch(() => {});
-        
-        // Wait 800ms for hardware auto-focus/exposure to settle
-        await new Promise(resolve => setTimeout(resolve, 800));
-
-        const vw = videoRef.current.videoWidth;
-        const vh = videoRef.current.videoHeight;
-        if (!vw || !vh) { console.warn('[camera] video not ready yet'); return; }
-        
-        const canvas = document.createElement('canvas');
-        canvas.width = vw;
-        canvas.height = vh;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-        
-        ctx.drawImage(videoRef.current, 0, 0, vw, vh);
-        const base64 = canvas.toDataURL('image/jpeg', 0.5);
-        
-        console.log(`[camera] captured ${isFrontCam ? 'front' : 'back'} frame`, vw, 'x', vh, 'size:', Math.round(base64.length / 1024), 'KB');
-        
-        fetch('/api/alert/images', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: currentUserId,
-            imageBase64: base64,
-            lat: location?.lat || 0,
-            lng: location?.lon || 0
-          })
-        }).catch(e => console.error('[camera] upload failed:', e));
-
-        // Toggle camera for next interval
-        isFrontCam = !isFrontCam;
-
-      } catch (err: any) {
-        console.warn('[camera] access denied or unavailable:', err.message);
       }
+      
+      if (videoRef.current) videoRef.current.srcObject = null;
+      console.log('[camera] burst sequence complete - both cameras captured');
     };
 
-    // Trigger first capture instantly, then run every 5s
-    captureAndUpload();
-    interval = setInterval(captureAndUpload, 5000);
+    captureSequence();
 
     return () => {
-      if (interval) clearInterval(interval);
-      if (camStream) camStream.getTracks().forEach(t => t.stop());
-      if (videoRef.current) videoRef.current.srcObject = null;
+      isCancelled = true;
+      if (videoRef.current && videoRef.current.srcObject) {
+         const stream = videoRef.current.srcObject as MediaStream;
+         stream.getTracks().forEach(t => t.stop());
+         videoRef.current.srcObject = null;
+      }
     };
   }, [breached, isRecording, currentUserId, location]);
 
@@ -568,7 +616,31 @@ export default function ListenPage() {
       setBreached(false); setPeakVol(0); sentRef.current = false; setSent(false);
       setGeminiAnalysis(null); setBackendStep(null); setAnalysisMs(null);
       const gsap = gsapRef.current;
-      const doStart = () => { start(); geminiConnect(); };
+      const doStart = () => { 
+        // Force-initialize AudioContext ON CLICK to bypass mobile browser silent/autoplay blocking
+        if (!audioCtxRef.current) {
+          try {
+            const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+            if (AudioContextClass) {
+              const ctx = new AudioContextClass();
+              // Unlock iOS audio instantly by playing an empty 1-frame sound
+              const buffer = ctx.createBuffer(1, 1, 22050);
+              const src = ctx.createBufferSource();
+              src.buffer = buffer;
+              src.connect(ctx.destination);
+              src.start(0);
+              audioCtxRef.current = ctx;
+            }
+          } catch (e) {
+            console.error('[audio] failed to initialize AudioContext:', e);
+          }
+        } else if (audioCtxRef.current.state === 'suspended') {
+          audioCtxRef.current.resume();
+        }
+
+        start(); 
+        geminiConnect(); 
+      };
       if (gsap && beginBtnRef.current) {
         gsap.to(beginBtnRef.current, {
           scale: 0.94, duration: 0.12, ease: 'power2.in',

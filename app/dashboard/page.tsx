@@ -8,7 +8,7 @@ import {
   Shield, RefreshCcw, Send, X, AlertTriangle,
   Activity, Users, Flame, Mic, Search, Camera
 } from 'lucide-react';
-import { useAlertImages } from '@/hooks/useAlertImages';
+import { useAlertImages, AlertImage } from '@/hooks/useAlertImages';
 
 export default function DashboardPage() {
   const { clusters: allClusters, loading, refetch } = useClusters();
@@ -17,7 +17,7 @@ export default function DashboardPage() {
   const [message, setMessage] = useState('');
   const [sendStatus, setSendStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const alertImages = useAlertImages(20);
-  const [expandedImage, setExpandedImage] = useState<string | null>(null);
+  const [expandedImage, setExpandedImage] = useState<AlertImage | null>(null);
 
   // Audio Recording (Voice of God)
   const [isRecording, setIsRecording] = useState(false);
@@ -332,23 +332,37 @@ export default function DashboardPage() {
 
             {/* Captured Images */}
             {alertImages.length > 0 && (
-              <div className="pt-2">
-                <div className="flex items-center gap-2 mb-2">
-                  <Camera className="w-3 h-3 text-indigo-400" />
-                  <p className="text-[10px] text-white/20 uppercase tracking-wider font-semibold">Silent Cam Captures</p>
-                  <span className="ml-auto text-[9px] text-white/30 font-mono">{alertImages.length}</span>
+              <div className="pt-4 border-t border-white/5 mt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Camera className="w-3.5 h-3.5 text-indigo-400" />
+                    <p className="text-[10px] text-white/40 uppercase tracking-wider font-bold">Silent captures</p>
+                  </div>
+                  <span className="text-[9px] text-white/30 font-mono bg-white/5 px-2 py-0.5 rounded-full">{alertImages.length}</span>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                {/* Scrollable grid container to prevent overflow */}
+                <div className="grid grid-cols-2 gap-2 max-h-[40vh] overflow-y-auto pr-1 pb-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
                   {alertImages.map(img => (
-                    <div key={img.id} className="relative group cursor-pointer" onClick={() => setExpandedImage(img.image)}>
+                    <div key={img.id} className="relative group cursor-pointer overflow-hidden rounded-lg bg-black/20" onClick={() => setExpandedImage(img)}>
                       <img
                         src={img.image}
                         alt={`Capture from ${img.userId}`}
-                        className="w-full aspect-[4/3] object-cover rounded-lg border border-white/10 hover:border-indigo-500/40 transition-all"
+                        className="w-full aspect-[4/3] object-cover border border-white/5 group-hover:border-indigo-500/40 transition-all group-hover:scale-105 duration-500"
                       />
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-1.5 rounded-b-lg">
-                        <p className="text-[8px] text-white/70 font-mono truncate">{img.userId}</p>
-                        <p className="text-[7px] text-white/40">{img.timestamp.toLocaleTimeString()}</p>
+                      
+                      {/* Hover Context Preview */}
+                      {img.context && (
+                        <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-start p-2 pointer-events-none">
+                          <p className="text-[9px] text-white/90 leading-relaxed CustomScrollbar overflow-hidden line-clamp-5">
+                            {img.context}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Always-visible Footer */}
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-2 pt-6 rounded-b-lg pointer-events-none">
+                        <p className="text-[9px] text-white/90 font-mono truncate">{img.userId}</p>
+                        <p className="text-[8px] text-white/50">{img.timestamp.toLocaleTimeString()}</p>
                       </div>
                     </div>
                   ))}
@@ -361,11 +375,25 @@ export default function DashboardPage() {
 
       {/* Expanded Image Modal */}
       {expandedImage && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-8" onClick={() => setExpandedImage(null)}>
-          <div className="relative max-w-3xl max-h-[80vh]">
-            <img src={expandedImage} alt="Expanded capture" className="max-w-full max-h-[80vh] object-contain rounded-xl border border-white/20 shadow-2xl" />
-            <button onClick={() => setExpandedImage(null)} className="absolute -top-3 -right-3 w-8 h-8 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white border border-white/20">
-              <X className="w-4 h-4" />
+        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setExpandedImage(null)}>
+          <div className="relative max-w-5xl w-full flex flex-col md:flex-row gap-4 items-center md:items-stretch h-full py-8 text-left" onClick={e => e.stopPropagation()}>
+            <div className="flex-1 flex justify-center w-full relative">
+              <img src={expandedImage.image} alt="Expanded capture" className="max-w-full max-h-[85vh] object-contain rounded-xl border border-white/10 shadow-2xl" />
+            </div>
+            {expandedImage.context && (
+              <div className="md:w-80 w-full bg-white/5 border border-white/10 rounded-xl p-5 overflow-y-auto max-h-[30vh] md:max-h-[85vh] text-sm text-white/80 leading-relaxed font-light shadow-2xl backdrop-blur-md">
+                <div className="flex items-center gap-2 mb-4 border-b border-white/10 pb-3">
+                  <Activity className="w-4 h-4 text-indigo-400" />
+                  <span className="text-xs font-semibold text-white uppercase tracking-widest">AI Context</span>
+                </div>
+                <div className="whitespace-pre-wrap">{expandedImage.context}</div>
+                <div className="mt-4 pt-4 border-t border-white/10 text-xs text-white/40 font-mono">
+                  Captured at: {expandedImage.timestamp.toLocaleString()}
+                </div>
+              </div>
+            )}
+            <button onClick={() => setExpandedImage(null)} className="absolute top-4 right-4 md:-top-2 md:-right-2 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white border border-white/20 shadow-xl transition-colors z-50">
+              <X className="w-5 h-5" />
             </button>
           </div>
         </div>

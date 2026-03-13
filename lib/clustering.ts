@@ -60,6 +60,28 @@ export async function clusterAlerts() {
   for (const cluster of clusters) {
     await addDoc(collection(db, 'clusters'), cluster);
   }
+  // Keep database completely clean (delete anything > 24 hours old)
+  await cleanupExpiredData();
+}
+
+export async function cleanupExpiredData() {
+  const cutoff = Timestamp.fromMillis(Date.now() - 24 * 60 * 60 * 1000); // 24 hours ago
+  const collectionsToClean = ['alerts', 'alert_images', 'messages'];
+  
+  for (const col of collectionsToClean) {
+    try {
+      const snaps = await getDocs(query(collection(db, col), where('timestamp', '<', cutoff)));
+      if (!snaps.empty) {
+        const batch = writeBatch(db);
+        snaps.docs.forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
+        console.log(`[cleanup] Destroyed ${snaps.size} expired records in ${col} (> 24 hours)`);
+      }
+    } catch (e: any) {
+      // Ignore missing index errors on first run, it will still clean effectively over time
+      console.warn(`[cleanup] Skipped ${col}: ${e.message}`);
+    }
+  }
 }
 
 function getDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {

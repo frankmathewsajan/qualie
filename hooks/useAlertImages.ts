@@ -8,6 +8,7 @@ export interface AlertImage {
   image: string;      // base64 data URL
   lat: number;
   lng: number;
+  context?: string;
   timestamp: Date;
 }
 
@@ -30,6 +31,7 @@ export function useAlertImages(maxImages = 20) {
           image: d.image || '',
           lat: d.lat || 0,
           lng: d.lng || 0,
+          context: d.context || '',
           timestamp: d.timestamp?.toDate?.() || new Date(),
         } as AlertImage;
       });
