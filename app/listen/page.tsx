@@ -483,7 +483,7 @@ export default function ListenPage() {
                     vibrate: [200, 100, 200, 100, 400],
                     tag: 'aegis-local-message',
                     renotify: true
-                  });
+                  } as any);
                 }).catch(() => new Notification(title, { body, icon: '/favicon.ico' }));
               } else {
                 new Notification(title, { body, icon: '/favicon.ico' });
@@ -851,7 +851,7 @@ export default function ListenPage() {
       {/* ── Header ───────────────────────────────────────────────────────── */}
       <header ref={headerRef} className="px-5 pt-6 pb-3 flex items-center justify-between shrink-0" style={{ opacity: 0 }}>
         <div>
-          <p className="text-[11px] font-medium tracking-widest text-slate-400 uppercase">{todayStr()}</p>
+          <p suppressHydrationWarning className="text-[11px] font-medium tracking-widest text-slate-400 uppercase">{todayStr()}</p>
           <p className="text-[10px] font-mono text-slate-300 mt-px">Acoustic Monitor</p>
         </div>
         <div className="flex items-center gap-2">
