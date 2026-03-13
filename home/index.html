@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aegis — Download</title>
+    <meta name="description" content="Aegis is an ambient acoustic security protocol. Zero clicks. Zero visibility. Total protection." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+    <style>
+      /* ── Reset ────────────────────────────────────── */
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html { scroll-behavior: smooth; }
+
+      /* ── Tokens ───────────────────────────────────── */
+      :root {
+        --black:   #0a0a0a;
+        --white:   #fafaf5;
+        --yellow:  #f5e642;
+        --red:     #e84040;
+        --blue:    #3a5cff;
+        --green:   #1ac97a;
+        --border:  3px solid var(--black);
+        --shadow:  6px 6px 0 var(--black);
+        --shadow-lg: 10px 10px 0 var(--black);
+        --radius:  0px;
+        --font-sans: 'Space Grotesk', sans-serif;
+        --font-mono: 'Space Mono', monospace;
+      }
+
+      body {
+        font-family: var(--font-sans);
+        background-color: var(--white);
+        color: var(--black);
+        min-height: 100dvh;
+        overflow-x: hidden;
+      }
+
+      /* ── Utility ──────────────────────────────────── */
+      .mono { font-family: var(--font-mono); }
+      .tag {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        padding: 4px 10px;
+        border: 2px solid var(--black);
+        background: var(--yellow);
+      }
+
+      /* ── Nav ──────────────────────────────────────── */
+      nav {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 2rem;
+        height: 60px;
+        background: var(--yellow);
+        border-bottom: var(--border);
+      }
+
+      .nav-logo {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 1.15rem;
+        letter-spacing: -0.02em;
+        text-decoration: none;
+        color: var(--black);
+      }
+
+      .nav-status {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--black);
+      }
+
+      .pulse-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--green);
+        border: 2px solid var(--black);
+        animation: pulse 2s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.35); opacity: 0.75; }
+      }
+
+      .nav-cta {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        text-decoration: none;
+        color: var(--white);
+        background: var(--black);
+        padding: 8px 18px;
+        border: 2px solid var(--black);
+        transition: transform 0.1s, box-shadow 0.1s;
+        box-shadow: 3px 3px 0 rgba(0,0,0,0.3);
+      }
+
+      .nav-cta:hover { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 rgba(0,0,0,0.3); }
+      .nav-cta:active { transform: translate(0,0); box-shadow: none; }
+
+      /* ── Marquee ──────────────────────────────────── */
+      .marquee-bar {
+        background: var(--black);
+        color: var(--yellow);
+        border-bottom: var(--border);
+        overflow: hidden;
+        white-space: nowrap;
+        padding: 0;
+        height: 36px;
+        display: flex;
+        align-items: center;
+      }
+
+      .marquee-inner {
+        display: inline-flex;
+        animation: marquee 22s linear infinite;
+        gap: 0;
+      }
+
+      .marquee-inner span {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0 2rem;
+        flex-shrink: 0;
+      }
+
+      .marquee-inner span::after {
+        content: '·';
+        margin-left: 2rem;
+      }
+
+      @keyframes marquee {
+        from { transform: translateX(0); }
+        to   { transform: translateX(-50%); }
+      }
+
+      /* ── Hero ─────────────────────────────────────── */
+      .hero {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        min-height: calc(100dvh - 96px);
+        border-bottom: var(--border);
+      }
+
+      .hero-left {
+        padding: 4rem;
+        border-right: var(--border);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        background: var(--white);
+      }
+
+      .hero-eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--black);
+        opacity: 0.45;
+        margin-bottom: 1.5rem;
+      }
+
+      .hero-h1 {
+        font-size: clamp(4.5rem, 10vw, 8rem);
+        font-weight: 700;
+        line-height: 0.9;
+        letter-spacing: -0.04em;
+        color: var(--black);
+        margin-bottom: 2rem;
+      }
+
+      .hero-h1 em {
+        font-style: normal;
+        background: var(--yellow);
+        box-decoration-break: clone;
+        -webkit-box-decoration-break: clone;
+        padding: 0 0.08em;
+        border: 3px solid var(--black);
+      }
+
+      .hero-sub {
+        font-size: 1.05rem;
+        font-weight: 400;
+        line-height: 1.65;
+        color: var(--black);
+        opacity: 0.6;
+        max-width: 36ch;
+        margin-bottom: 3rem;
+      }
+
+      .btn-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        text-decoration: none;
+        padding: 14px 24px;
+        border: var(--border);
+        cursor: pointer;
+        transition: transform 0.1s, box-shadow 0.1s;
+        white-space: nowrap;
+      }
+
+      .btn:hover  { transform: translate(-3px,-3px); box-shadow: var(--shadow); }
+      .btn:active { transform: translate(0,0); box-shadow: none; }
+
+      .btn-primary { background: var(--black); color: var(--white); box-shadow: 5px 5px 0 rgba(0,0,0,0.2); }
+      .btn-outline { background: var(--white); color: var(--black); box-shadow: 5px 5px 0 var(--black); }
+
+      .hero-footnote {
+        margin-top: 2.5rem;
+        font-family: var(--font-mono);
+        font-size: 0.6rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--black);
+        opacity: 0.28;
+      }
+
+      /* ── Hero right ──────────────────────────────── */
+      .hero-right {
+        background: var(--black);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 4rem;
+        position: relative;
+        overflow: hidden;
+        gap: 2rem;
+      }
+
+      /* Grid bg */
+      .hero-right::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(245,230,66,0.07) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(245,230,66,0.07) 1px, transparent 1px);
+        background-size: 44px 44px;
+        pointer-events: none;
+      }
+
+      .phone-mockup {
+        position: relative;
+        z-index: 1;
+        width: 220px;
+        aspect-ratio: 9/19;
+        border: 3px solid rgba(255,255,255,0.15);
+        border-radius: 32px;
+        background: #111;
+        box-shadow: 10px 10px 0 var(--yellow), 0 0 60px rgba(245,230,66,0.08);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .phone-notch {
+        height: 28px;
+        background: #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        flex-shrink: 0;
+      }
+
+      .phone-notch-pill {
+        width: 60px;
+        height: 10px;
+        background: #222;
+        border-radius: 99px;
+        border: 1px solid rgba(255,255,255,0.1);
+      }
+
+      .phone-screen {
+        flex: 1;
+        background: #0a0a0a;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 12px;
+      }
+
+      .phone-temp {
+        font-family: var(--font-mono);
+        font-size: 3.2rem;
+        font-weight: 700;
+        color: #fff;
+        line-height: 1;
+      }
+
+      .phone-label {
+        font-family: var(--font-mono);
+        font-size: 0.5rem;
+        font-weight: 700;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.25);
+      }
+
+      .phone-status {
+        width: 100%;
+        background: #111;
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 8px;
+        padding: 9px 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 8px;
+      }
+
+      .phone-status-dot {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-family: var(--font-mono);
+        font-size: 0.45rem;
+        font-weight: 700;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.45);
+      }
+
+      .phone-status-dot::before {
+        content: '';
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--green);
+        animation: pulse 2s ease-in-out infinite;
+      }
+
+      .phone-armed {
+        font-family: var(--font-mono);
+        font-size: 0.45rem;
+        font-weight: 700;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.8);
+      }
+
+      .hero-right-caption {
+        position: relative;
+        z-index: 1;
+        text-align: center;
+      }
+
+      .hero-right-caption p {
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.22);
+        line-height: 1.8;
+      }
+
+      /* ── Section shared ───────────────────────────── */
+      section { border-bottom: var(--border); }
+
+      .section-inner {
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 5rem 2rem;
+      }
+
+      .section-label {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        opacity: 0.35;
+        margin-bottom: 2.5rem;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .section-label::after {
+        content: '';
+        flex: 1;
+        height: 2px;
+        background: var(--black);
+        opacity: 0.12;
+      }
+
+      /* ── Steps ────────────────────────────────────── */
+      .steps-section { background: var(--yellow); }
+
+      .steps-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0;
+        border-top: var(--border);
+        border-left: var(--border);
+      }
+
+      .step {
+        border-right: var(--border);
+        border-bottom: var(--border);
+        padding: 2.5rem;
+        background: var(--yellow);
+        position: relative;
+        transition: background 0.15s;
+      }
+
+      .step:hover { background: var(--white); }
+
+      .step-num {
+        font-family: var(--font-mono);
+        font-size: 4rem;
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: -0.04em;
+        color: var(--black);
+        opacity: 0.12;
+        margin-bottom: 1.2rem;
+      }
+
+      .step-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin-bottom: 0.6rem;
+      }
+
+      .step-body {
+        font-size: 0.9rem;
+        font-weight: 400;
+        line-height: 1.65;
+        opacity: 0.6;
+      }
+
+      /* ── Feature cards ────────────────────────────── */
+      .features-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+      }
+
+      .feature-card {
+        border: var(--border);
+        padding: 2rem;
+        background: var(--white);
+        box-shadow: var(--shadow);
+        transition: transform 0.1s, box-shadow 0.1s;
+      }
+
+      .feature-card:hover {
+        transform: translate(-3px, -3px);
+        box-shadow: var(--shadow-lg);
+      }
+
+      .feature-icon {
+        font-size: 1.6rem;
+        margin-bottom: 1rem;
+      }
+
+      .feature-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin-bottom: 0.5rem;
+      }
+
+      .feature-body {
+        font-size: 0.875rem;
+        font-weight: 400;
+        line-height: 1.65;
+        opacity: 0.55;
+      }
+
+      /* ── Download CTA ─────────────────────────────── */
+      .cta-section { background: var(--black); }
+
+      .cta-inner {
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 6rem 2rem;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4rem;
+        align-items: center;
+      }
+
+      .cta-h2 {
+        font-size: clamp(2.8rem, 6vw, 5rem);
+        font-weight: 700;
+        letter-spacing: -0.04em;
+        line-height: 0.95;
+        color: var(--white);
+      }
+
+      .cta-h2 em {
+        font-style: normal;
+        color: var(--yellow);
+      }
+
+      .cta-sub {
+        margin-top: 1.5rem;
+        font-size: 0.95rem;
+        font-weight: 400;
+        line-height: 1.65;
+        color: rgba(255,255,255,0.38);
+        max-width: 38ch;
+      }
+
+      .cta-right {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .dl-btn {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 18px 24px;
+        border: 3px solid rgba(255,255,255,0.14);
+        background: rgba(255,255,255,0.05);
+        color: var(--white);
+        text-decoration: none;
+        transition: transform 0.1s, border-color 0.15s, background 0.15s;
+        cursor: pointer;
+      }
+
+      .dl-btn:hover {
+        border-color: var(--yellow);
+        background: rgba(245,230,66,0.07);
+        transform: translate(-3px,-3px);
+        box-shadow: 5px 5px 0 var(--yellow);
+      }
+
+      .dl-btn-icon {
+        font-size: 1.8rem;
+        flex-shrink: 0;
+        line-height: 1;
+      }
+
+      .dl-btn-text small {
+        display: block;
+        font-family: var(--font-mono);
+        font-size: 0.55rem;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        opacity: 0.4;
+        margin-bottom: 3px;
+      }
+
+      .dl-btn-text strong {
+        display: block;
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+
+      .dl-btn-badge {
+        margin-left: auto;
+        flex-shrink: 0;
+      }
+
+      .cta-divider {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-family: var(--font-mono);
+        font-size: 0.6rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.2);
+      }
+
+      .cta-divider::before, .cta-divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: rgba(255,255,255,0.1);
+      }
+
+      .dl-btn-web {
+        background: var(--yellow);
+        border-color: var(--yellow);
+        color: var(--black);
+      }
+
+      .dl-btn-web:hover {
+        border-color: var(--yellow);
+        background: var(--yellow);
+        box-shadow: 5px 5px 0 rgba(255,255,255,0.25);
+        color: var(--black);
+      }
+
+      /* ── Spec bar ─────────────────────────────────── */
+      .spec-bar {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        border-top: var(--border);
+      }
+
+      .spec-item {
+        padding: 2.5rem 2rem;
+        border-right: var(--border);
+        text-align: center;
+      }
+
+      .spec-item:last-child { border-right: none; }
+
+      .spec-val {
+        font-family: var(--font-mono);
+        font-size: 2rem;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        color: var(--black);
+        display: block;
+        margin-bottom: 0.3rem;
+      }
+
+      .spec-key {
+        font-family: var(--font-mono);
+        font-size: 0.6rem;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        opacity: 0.35;
+      }
+
+      /* ── Footer ───────────────────────────────────── */
+      footer {
+        background: var(--yellow);
+        border-top: var(--border);
+        padding: 1.5rem 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+      }
+
+      footer p {
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        opacity: 0.45;
+      }
+
+      footer a {
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--black);
+        text-decoration: none;
+        opacity: 0.55;
+        border-bottom: 2px solid var(--black);
+        transition: opacity 0.15s;
+      }
+
+      footer a:hover { opacity: 1; }
+
+      /* ── Responsive ───────────────────────────────── */
+      @media (max-width: 900px) {
+        .hero { grid-template-columns: 1fr; }
+        .hero-left { border-right: none; border-bottom: var(--border); padding: 2.5rem 1.5rem; }
+        .hero-right { padding: 3rem 1.5rem; min-height: 480px; }
+        .steps-grid { grid-template-columns: 1fr; }
+        .features-grid { grid-template-columns: 1fr; }
+        .cta-inner { grid-template-columns: 1fr; }
+        .spec-bar { grid-template-columns: repeat(2, 1fr); }
+        .spec-item:nth-child(2) { border-right: none; }
+        .spec-item:nth-child(3) { border-top: var(--border); }
+        .spec-item:nth-child(4) { border-top: var(--border); border-right: none; }
+        nav { padding: 0 1rem; }
+        .section-inner { padding: 3.5rem 1.5rem; }
+        footer { padding: 1.25rem 1.5rem; }
+      }
+
+      @media (max-width: 600px) {
+        .hero-h1 { font-size: 3.8rem; }
+        .nav-cta { display: none; }
+        .spec-bar { grid-template-columns: 1fr 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+
+    <!-- ── Nav ─────────────────────────────────────── -->
+    <nav>
+      <a href="/" class="nav-logo">AEGIS//</a>
+      <div class="nav-status">
+        <div class="pulse-dot"></div>
+        System Online
+      </div>
+      <a href="#download" class="nav-cta">Get the App</a>
+    </nav>
+
+    <!-- ── Marquee ──────────────────────────────────── -->
+    <div class="marquee-bar" aria-hidden="true">
+      <div class="marquee-inner">
+        <span>Zero-click protection</span>
+        <span>Sub-30ms latency</span>
+        <span>Gemini Multimodal Live</span>
+        <span>Always-on acoustic layer</span>
+        <span>16kHz PCM WebRTC</span>
+        <span>Zero-copy worklets</span>
+        <span>Silent escalation</span>
+        <span>Invisible to aggressors</span>
+        <!-- duplicate for seamless loop -->
+        <span>Zero-click protection</span>
+        <span>Sub-30ms latency</span>
+        <span>Gemini Multimodal Live</span>
+        <span>Always-on acoustic layer</span>
+        <span>16kHz PCM WebRTC</span>
+        <span>Zero-copy worklets</span>
+        <span>Silent escalation</span>
+        <span>Invisible to aggressors</span>
+      </div>
+    </div>
+
+    <!-- ── Hero ─────────────────────────────────────── -->
+    <section class="hero">
+      <div class="hero-left">
+        <div>
+          <p class="hero-eyebrow">System Defense Initiative · v2.4.1</p>
+          <h1 class="hero-h1">
+            Security<br/>
+            that <em>hides</em><br/>
+            in plain<br/>
+            sight.
+          </h1>
+          <p class="hero-sub">
+            Aegis is an ambient acoustic security protocol. No buttons. No cameras. No panic — just an invisible perimeter that listens, analyzes, and acts.
+          </p>
+          <div class="btn-group">
+            <a href="#download" class="btn btn-primary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download App
+            </a>
+            <a href="#download" class="btn btn-outline">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Live Demo
+            </a>
+          </div>
+          <p class="hero-footnote">Android APK · Web App · No account required</p>
+        </div>
+      </div>
+      <div class="hero-right">
+        <div class="phone-mockup">
+          <div class="phone-notch">
+            <div class="phone-notch-pill"></div>
+          </div>
+          <div class="phone-screen">
+            <p class="phone-label">San Francisco</p>
+            <p class="phone-temp">72°</p>
+            <p class="phone-label">Partly Cloudy</p>
+            <div class="phone-status">
+              <div class="phone-status-dot">Covert Channel</div>
+              <div class="phone-armed">Armed</div>
+            </div>
+          </div>
+        </div>
+        <div class="hero-right-caption">
+          <p>Aegis hides behind everyday apps<br/>Your phone looks perfectly normal.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Specs strip ───────────────────────────────── -->
+    <div class="spec-bar">
+      <div class="spec-item">
+        <span class="spec-val">&lt;30ms</span>
+        <span class="spec-key">Audio Latency</span>
+      </div>
+      <div class="spec-item">
+        <span class="spec-val">16kHz</span>
+        <span class="spec-key">PCM Sample Rate</span>
+      </div>
+      <div class="spec-item">
+        <span class="spec-val">0-copy</span>
+        <span class="spec-key">Worklet Pipeline</span>
+      </div>
+      <div class="spec-item">
+        <span class="spec-val">100%</span>
+        <span class="spec-key">Zero-Click</span>
+      </div>
+    </div>
+
+    <!-- ── Steps ─────────────────────────────────────── -->
+    <section class="steps-section">
+      <div class="section-inner" style="padding-bottom: 0;">
+        <p class="section-label">How it works</p>
+        <h2 style="font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 700; letter-spacing: -0.04em; line-height: 1; margin-bottom: 3rem;">
+          Three steps.<br/>Zero friction.
+        </h2>
+      </div>
+      <div class="steps-grid">
+        <div class="step">
+          <div class="step-num">01</div>
+          <h3 class="step-title">Download &amp; Install</h3>
+          <p class="step-body">Install Aegis on Android by scanning the QR code or downloading the APK directly from GitHub Releases. Takes under 60 seconds. No account required.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">02</div>
+          <h3 class="step-title">Arm the Channel</h3>
+          <p class="step-body">Open the app once and arm the ambient channel. Aegis runs silently in the background behind any app — calendar, weather, maps.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">03</div>
+          <h3 class="step-title">Stay Protected</h3>
+          <p class="step-body">Aegis listens. The moment it detects a threat signature, it triggers a silent escalation chain — no button, no tell, no exposure.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Features ──────────────────────────────────── -->
+    <section>
+      <div class="section-inner">
+        <p class="section-label">Why Aegis</p>
+        <h2 style="font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 700; letter-spacing: -0.04em; line-height: 1; margin-bottom: 3rem;">
+          Built for the<br/>worst-case scenario.
+        </h2>
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon">🔇</div>
+            <h3 class="feature-title">Invisible to aggressors</h3>
+            <p class="feature-body">Visible panic buttons escalate violence. Aegis leaves zero visual footprint — no badge, no indicator, no give-away.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🧠</div>
+            <h3 class="feature-title">Gemini Multimodal Live</h3>
+            <p class="feature-body">Powered by Google Gemini's real-time neural audio intelligence. It doesn't just record — it comprehends context and intent.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">⚡</div>
+            <h3 class="feature-title">Sub-30ms response</h3>
+            <p class="feature-body">Zero-copy AudioWorklet pipeline with 16kHz PCM WebRTC streaming. Faster than a human blink, quieter than a breath.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🔒</div>
+            <h3 class="feature-title">No account. No cloud log.</h3>
+            <p class="feature-body">Audio is processed on-device. No recordings stored. No profiles built. Access keys stay local and encrypted.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Download CTA ──────────────────────────────── -->
+    <section class="cta-section" id="download">
+      <div class="cta-inner">
+        <div>
+          <div class="tag" style="background: var(--yellow); margin-bottom: 1.5rem;">Available Now</div>
+          <h2 class="cta-h2">
+            Download<br/>
+            <em>Aegis.</em><br/>
+            Stay hidden.
+          </h2>
+          <p class="cta-sub">
+            Free to install. No subscription. No tracking. One tap to arm — then never think about it again.
+          </p>
+        </div>
+        <div class="cta-right">
+          <!-- QR code — update data= URL to your actual GitHub Releases APK link -->
+          <div class="dl-qr-block">
+            <img class="dl-qr-img"
+              src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https%3A%2F%2Fgithub.com%2Ffrankmathewsajan%2Fqualie%2Freleases%2Ftag%2Fv1.0.0&color=0a0a0a&bgcolor=f5e642&margin=8"
+              alt="Scan to download Aegis APK" />
+            <div>
+              <p class="dl-qr-label">Scan to download</p>
+              <p class="dl-qr-sub">Android APK<br/>No Play Store required</p>
+            </div>
+          </div>
+
+          <a href="https://github.com/frankmathewsajan/qualie/releases/tag/v1.0.0"
+             class="dl-btn" id="apk-btn">
+            <div class="dl-btn-icon">
+              <i class="fa-solid fa-download"></i>
+            </div>
+            <div class="dl-btn-text">
+              <small>Direct download</small>
+              <strong>aegis.apk</strong>
+            </div>
+            <div class="dl-btn-badge">
+              <div class="tag" style="font-size: 0.55rem; background: transparent; border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.4);">Android 12+</div>
+            </div>
+          </a>
+
+          <div class="cta-divider">or</div>
+
+          <a href="https://qualie--aegis-weather.asia-southeast1.hosted.app/listen" class="dl-btn dl-btn-web">
+            <div class="dl-btn-icon">
+              <i class="fa-solid fa-display"></i>
+            </div>
+            <div class="dl-btn-text">
+              <small>Run in browser</small>
+              <strong>Web App</strong>
+            </div>
+            <div class="dl-btn-badge">
+              <div class="tag" style="font-size: 0.55rem;">No install</div>
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Footer ─────────────────────────────────────── -->
+    <footer>
+      <p>© 2026 Aegis · System Defense Initiative</p>
+      <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+        <a href="https://qualie--aegis-weather.asia-southeast1.hosted.app/listen">Demo</a>
+        <a href="#">Privacy</a>
+        <a href="#">Contact</a>
+      </div>
+      <p>v2.4.1 · Classified</p>
+    </footer>
+
+  </body>
+</html>

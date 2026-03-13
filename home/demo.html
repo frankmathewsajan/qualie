@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aegis — Live Demo</title>
+    <meta name="description" content="Experience the Aegis cinematic demo. An ambient acoustic security protocol invisible to aggressors." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" />
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      :root {
+        --black:  #0c0c0c;
+        --white:  #f8f4ef;
+        --yellow: #f5e642;
+        --green:  #1ac97a;
+        --border: 3px solid #0c0c0c;
+        --font-sans: 'Space Grotesk', sans-serif;
+        --font-mono: 'Space Mono', monospace;
+      }
+
+      html, body {
+        height: 100%;
+        overflow: hidden;
+        font-family: var(--font-sans);
+        background: var(--black);
+      }
+
+      /* ── Slides container (CSS scroll-snap) ──────── */
+      .slides {
+        height: 100dvh;
+        overflow-y: scroll;
+        scroll-snap-type: y mandatory;
+        scrollbar-width: none;
+      }
+      .slides::-webkit-scrollbar { display: none; }
+
+      /* ── Each slide ───────────────────────────────── */
+      .slide {
+        scroll-snap-align: start;
+        scroll-snap-stop: always;
+        height: 100dvh;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .slide-light { background: var(--white); }
+      .slide-dark  { background: var(--black); }
+
+      /* ── Back button ──────────────────────────────── */
+      .back-btn {
+        position: fixed;
+        top: 1.2rem;
+        left: 1.5rem;
+        z-index: 200;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        text-decoration: none;
+        padding: 8px 16px;
+        border: 2px solid rgba(255,255,255,0.18);
+        background: rgba(10,10,10,0.6);
+        color: rgba(255,255,255,0.7);
+        backdrop-filter: blur(8px);
+        transition: border-color 0.15s, color 0.15s;
+      }
+      .back-btn:hover { border-color: var(--yellow); color: var(--yellow); }
+      .back-btn i { font-size: 0.75rem; }
+
+      /* ── Nav dots ─────────────────────────────────── */
+      .nav-dots {
+        position: fixed;
+        right: 1.5rem;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 200;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .nav-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        border: 2px solid rgba(255,255,255,0.35);
+        background: transparent;
+        cursor: pointer;
+        transition: background 0.25s, border-color 0.25s, transform 0.25s;
+      }
+      .nav-dot.active {
+        background: var(--yellow);
+        border-color: var(--yellow);
+        transform: scale(1.4);
+      }
+
+      /* ── Slide counter ────────────────────────────── */
+      .slide-counter {
+        position: fixed;
+        bottom: 1.5rem;
+        right: 1.5rem;
+        z-index: 200;
+        font-family: var(--font-mono);
+        font-size: 0.6rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        color: rgba(255,255,255,0.22);
+      }
+
+      /* ── Grid overlay (dark slides) ───────────────── */
+      .grid-overlay {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(245,230,66,0.06) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(245,230,66,0.06) 1px, transparent 1px);
+        background-size: 44px 44px;
+        pointer-events: none;
+      }
+
+      /* ── Slide content ────────────────────────────── */
+      .slide-inner {
+        position: relative;
+        z-index: 1;
+        padding: 5rem 6rem;
+        max-width: 1100px;
+      }
+
+      @media (max-width: 600px) { .slide-inner { padding: 3rem 2rem; } }
+
+      .slide-eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        margin-bottom: 1.5rem;
+        opacity: 0;
+      }
+      .slide-light .slide-eyebrow { color: rgba(10,10,10,0.4); }
+      .slide-dark  .slide-eyebrow { color: rgba(255,255,255,0.3); }
+
+      .slide-h1 {
+        font-size: clamp(4rem, 9vw, 7.5rem);
+        font-weight: 700;
+        line-height: 0.88;
+        letter-spacing: -0.04em;
+        margin-bottom: 2rem;
+        overflow: hidden;
+        opacity: 0;
+      }
+      .slide-light .slide-h1 { color: var(--black); }
+      .slide-dark  .slide-h1 { color: var(--white); }
+
+      .slide-h1 em {
+        font-style: normal;
+        background: var(--yellow);
+        padding: 0 0.08em;
+        border: 3px solid var(--black);
+        box-decoration-break: clone;
+        -webkit-box-decoration-break: clone;
+      }
+      .slide-dark .slide-h1 em { border-color: var(--yellow); }
+
+      .slide-body {
+        font-size: clamp(0.95rem, 1.8vw, 1.15rem);
+        font-weight: 400;
+        line-height: 1.7;
+        max-width: 44ch;
+        opacity: 0;
+      }
+      .slide-light .slide-body { color: rgba(10,10,10,0.56); }
+      .slide-dark  .slide-body { color: rgba(255,255,255,0.42); }
+
+      /* ── Accent bar ───────────────────────────────── */
+      .accent-bar {
+        width: 0;
+        height: 4px;
+        background: var(--yellow);
+        border: 2px solid var(--black);
+        margin-bottom: 2rem;
+      }
+      .slide-dark .accent-bar { border-color: var(--yellow); }
+
+      /* ── ── SLIDE 1: HERO ── ──────────────────────── */
+      /* Large "AEGIS" watermark */
+      .s1-watermark {
+        position: absolute;
+        right: -4rem;
+        top: 50%;
+        transform: translateY(-50%) rotate(-90deg);
+        font-family: var(--font-mono);
+        font-size: clamp(6rem, 16vw, 14rem);
+        font-weight: 700;
+        letter-spacing: -0.06em;
+        color: rgba(10,10,10,0.05);
+        white-space: nowrap;
+        pointer-events: none;
+        user-select: none;
+        line-height: 1;
+      }
+
+      .s1-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-family: var(--font-mono);
+        font-size: 0.6rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        padding: 5px 12px;
+        border: 2px solid var(--black);
+        background: var(--yellow);
+        margin-bottom: 2rem;
+        opacity: 0;
+      }
+      .s1-badge-dot {
+        width: 7px; height: 7px; border-radius: 50%;
+        background: var(--green);
+        border: 1.5px solid var(--black);
+        animation: blink 2s ease-in-out infinite;
+      }
+      @keyframes blink {
+        0%,100% { opacity: 1; } 50% { opacity: 0.35; }
+      }
+
+      /* ── ── SLIDE 2: SWARM ── ──────────────────────── */
+      .swarm-dots {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        overflow: hidden;
+      }
+      .swarm-dot {
+        position: absolute;
+        border-radius: 50%;
+        background: var(--yellow);
+        opacity: 0;
+      }
+
+      /* ── ── SLIDE 3: WEATHER ── ────────────────────── */
+      .weather-card {
+        position: absolute;
+        right: 6rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 240px;
+        border: var(--border);
+        background: var(--white);
+        box-shadow: 8px 8px 0 var(--black);
+        padding: 1.5rem;
+        opacity: 0;
+      }
+      @media (max-width: 800px) { .weather-card { display: none; } }
+
+      .weather-city {
+        font-family: var(--font-mono);
+        font-size: 0.58rem;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: rgba(10,10,10,0.35);
+        margin-bottom: 0.25rem;
+      }
+      .weather-temp {
+        font-family: var(--font-mono);
+        font-size: 3.5rem;
+        font-weight: 700;
+        line-height: 1;
+        color: var(--black);
+        margin-bottom: 0.25rem;
+      }
+      .weather-desc {
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: rgba(10,10,10,0.4);
+        margin-bottom: 1rem;
+      }
+      .weather-status {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #f0ece4;
+        border: 1.5px solid rgba(10,10,10,0.1);
+        padding: 8px 10px;
+      }
+      .weather-covert {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-family: var(--font-mono);
+        font-size: 0.5rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: rgba(10,10,10,0.38);
+      }
+      .covert-dot {
+        width: 6px; height: 6px; border-radius: 50%;
+        background: var(--green); border: 1.5px solid var(--black);
+        animation: blink 2s ease-in-out infinite;
+      }
+      .weather-armed {
+        font-family: var(--font-mono);
+        font-size: 0.5rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--black);
+      }
+
+      /* ── ── SLIDE 4: ARCHITECTURE ── ─────────────── */
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1px;
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.08);
+        margin-top: 2.5rem;
+        max-width: 520px;
+        opacity: 0;
+      }
+      .stat-item {
+        background: var(--black);
+        padding: 1.25rem 1.5rem;
+        border: 1px solid rgba(255,255,255,0.06);
+      }
+      .stat-val {
+        font-family: var(--font-mono);
+        font-size: 1.7rem;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        color: var(--yellow);
+        display: block;
+        margin-bottom: 0.2rem;
+      }
+      .stat-key {
+        font-family: var(--font-mono);
+        font-size: 0.55rem;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.25);
+      }
+
+      /* ── Scroll hint ──────────────────────────────── */
+      .scroll-hint {
+        position: fixed;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        font-family: var(--font-mono);
+        font-size: 0.58rem;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.2);
+        z-index: 200;
+        transition: opacity 0.5s;
+      }
+      .scroll-hint i { animation: bounce 1.6s ease-in-out infinite; }
+      @keyframes bounce {
+        0%,100% { transform: translateY(0); }
+        50%      { transform: translateY(5px); }
+      }
+    </style>
+  </head>
+  <body>
+
+    <!-- Back -->
+    <a href="/" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Home</a>
+
+    <!-- Nav dots -->
+    <div class="nav-dots">
+      <div class="nav-dot active" data-slide="0"></div>
+      <div class="nav-dot" data-slide="1"></div>
+      <div class="nav-dot" data-slide="2"></div>
+      <div class="nav-dot" data-slide="3"></div>
+    </div>
+
+    <!-- Counter -->
+    <div class="slide-counter" id="counter">01 / 04</div>
+
+    <!-- Scroll hint -->
+    <div class="scroll-hint" id="scroll-hint">
+      Scroll <i class="fa-solid fa-chevron-down"></i>
+    </div>
+
+    <!-- ── Slides ──────────────────────────────────── -->
+    <div class="slides" id="slides">
+
+      <!-- ── SLIDE 1: HERO ──────────────────────────── -->
+      <div class="slide slide-light" data-index="0">
+        <div class="s1-watermark">AEGIS</div>
+        <div class="slide-inner">
+          <div class="s1-badge">
+            <div class="s1-badge-dot"></div>
+            System Active · v2.4.1
+          </div>
+          <p class="slide-eyebrow">Ambient Acoustic Security</p>
+          <div class="accent-bar"></div>
+          <h1 class="slide-h1">THE<br/>INVISIBLE<br/><em>SHIELD.</em></h1>
+          <p class="slide-body">
+            Aegis runs silently behind any app on your phone. No button. No badge. No panic. Just a covert perimeter that hears what others miss and acts before you know you need it.
+          </p>
+        </div>
+      </div>
+
+      <!-- ── SLIDE 2: SWARM ─────────────────────────── -->
+      <div class="slide slide-dark" data-index="1">
+        <div class="grid-overlay"></div>
+        <div class="swarm-dots" id="swarm-dots"></div>
+        <div class="slide-inner">
+          <p class="slide-eyebrow">Protocol Layer</p>
+          <div class="accent-bar"></div>
+          <h1 class="slide-h1">THE<br/><em>SWARM</em><br/>PROTOCOL.</h1>
+          <p class="slide-body">
+            A zero-copy AudioWorklet pipeline streams 16kHz PCM in real time to Gemini Multimodal Live. The swarm of micro-sensors converges on a single verdict within 30 milliseconds.
+          </p>
+        </div>
+      </div>
+
+      <!-- ── SLIDE 3: AGGRESSOR'S GAZE ─────────────── -->
+      <div class="slide slide-light" data-index="2">
+        <div class="weather-card" id="weather-card">
+          <p class="weather-city">San Francisco</p>
+          <p class="weather-temp">72°</p>
+          <p class="weather-desc">Partly Cloudy</p>
+          <div class="weather-status">
+            <div class="weather-covert">
+              <div class="covert-dot"></div>
+              Covert Channel
+            </div>
+            <div class="weather-armed">Armed</div>
+          </div>
+        </div>
+        <div class="slide-inner">
+          <p class="slide-eyebrow">Stealth Layer</p>
+          <div class="accent-bar"></div>
+          <h1 class="slide-h1">THE<br/>AGGRESSOR'S<br/><em>GAZE.</em></h1>
+          <p class="slide-body">
+            Your phone shows weather. Your attacker sees nothing unusual. Aegis hides in plain sight behind ordinary apps — invisible to anyone who looks at your screen.
+          </p>
+        </div>
+      </div>
+
+      <!-- ── SLIDE 4: ARCHITECTURE ──────────────────── -->
+      <div class="slide slide-dark" data-index="3">
+        <div class="grid-overlay"></div>
+        <div class="slide-inner">
+          <p class="slide-eyebrow">Technical Architecture</p>
+          <div class="accent-bar"></div>
+          <h1 class="slide-h1">BUILT<br/>FOR THE<br/><em>EDGE.</em></h1>
+          <p class="slide-body">
+            Every component is designed to minimize footprint and maximize speed. No binary left on the server. No profile. Just pure, real-time inference at the acoustic edge.
+          </p>
+          <div class="stat-grid" id="stat-grid">
+            <div class="stat-item">
+              <span class="stat-val" data-target="30">0</span>
+              <span class="stat-key">ms Latency</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-val" data-target="16">0</span>
+              <span class="stat-key">kHz Sample Rate</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-val">0-copy</span>
+              <span class="stat-key">Worklet Pipeline</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-val">100<span style="font-size:1rem">%</span></span>
+              <span class="stat-key">Zero-Click</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /slides -->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <script>
+      // ── Swarm dots ──────────────────────────────────────────────
+      const swarmContainer = document.getElementById('swarm-dots');
+      for (let i = 0; i < 28; i++) {
+        const d = document.createElement('div');
+        d.className = 'swarm-dot';
+        const size = Math.random() * 5 + 2;
+        d.style.cssText = `
+          width:${size}px; height:${size}px;
+          left:${Math.random()*100}%;
+          top:${Math.random()*100}%;
+        `;
+        swarmContainer.appendChild(d);
+      }
+
+      // ── IntersectionObserver per slide ──────────────────────────
+      const slides = document.querySelectorAll('.slide');
+      const dots = document.querySelectorAll('.nav-dot');
+      const counter = document.getElementById('counter');
+      const scrollHint = document.getElementById('scroll-hint');
+      let currentIndex = 0;
+      let slidesAnimated = new Set();
+
+      function animateSlide(slide, index) {
+        if (slidesAnimated.has(index)) return;
+        slidesAnimated.add(index);
+
+        const eyebrow = slide.querySelector('.slide-eyebrow');
+        const bar = slide.querySelector('.accent-bar');
+        const h1 = slide.querySelector('.slide-h1');
+        const body = slide.querySelector('.slide-body');
+
+        const tl = gsap.timeline({ defaults: { ease: 'power4.out' } });
+
+        if (eyebrow) tl.to(eyebrow, { opacity: 1, y: 0, duration: 0.7 }, 0.1);
+        if (bar)     tl.to(bar,     { width: 60, duration: 0.6, ease: 'power3.inOut' }, 0.25);
+        if (h1)      tl.to(h1,      { opacity: 1, y: 0, duration: 0.9 }, 0.35);
+        if (body)    tl.to(body,    { opacity: 1, y: 0, duration: 0.7 }, 0.6);
+
+        // Slide-specific extras
+        if (index === 0) {
+          const badge = slide.querySelector('.s1-badge');
+          if (badge) gsap.from(badge, { opacity: 0, y: 12, duration: 0.6, ease: 'power3.out' });
+        }
+
+        if (index === 1) {
+          gsap.to('.swarm-dot', {
+            opacity: (i) => Math.random() * 0.4 + 0.05,
+            x:       (i) => (Math.random() - 0.5) * 80,
+            y:       (i) => (Math.random() - 0.5) * 80,
+            scale:   (i) => Math.random() * 1.8 + 0.5,
+            duration: (i) => Math.random() * 2 + 1,
+            stagger:  0.04,
+            ease:    'power2.out',
+            repeat:  -1,
+            yoyo:    true,
+          });
+        }
+
+        if (index === 2) {
+          const wc = document.getElementById('weather-card');
+          if (wc) gsap.to(wc, { opacity: 1, x: 0, duration: 0.9, ease: 'power3.out', delay: 0.5 });
+          gsap.from(wc, { x: 40 });
+        }
+
+        if (index === 3) {
+          const sg = document.getElementById('stat-grid');
+          if (sg) {
+            gsap.to(sg, { opacity: 1, duration: 0.5, delay: 0.55 });
+            gsap.from('.stat-item', { opacity: 0, y: 20, stagger: 0.1, duration: 0.6, delay: 0.6, ease: 'power3.out' });
+            // Count up numeric values
+            slide.querySelectorAll('.stat-val[data-target]').forEach(el => {
+              const target = parseInt(el.dataset.target);
+              const obj = { val: 0 };
+              gsap.to(obj, {
+                val: target, duration: 1.4, delay: 0.8, ease: 'power2.out',
+                onUpdate: () => { el.textContent = '<' + Math.round(obj.val); }
+              });
+            });
+          }
+        }
+      }
+
+      // Slide h1 initial state (hidden below)
+      slides.forEach(s => {
+        const h1 = s.querySelector('.slide-h1');
+        const body = s.querySelector('.slide-body');
+        if (h1) { gsap.set(h1, { y: 60 }); }
+        if (body) { gsap.set(body, { y: 30 }); }
+      });
+
+      // First slide on load
+      setTimeout(() => animateSlide(slides[0], 0), 300);
+
+      // ── Scroll observer ─────────────────────────────────────────
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
+            const idx = parseInt(entry.target.dataset.index);
+            currentIndex = idx;
+
+            // Nav dots
+            dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+
+            // Counter
+            counter.textContent = String(idx + 1).padStart(2, '0') + ' / 04';
+
+            // Scroll hint
+            scrollHint.style.opacity = idx === 0 ? '1' : '0';
+
+            // Animate
+            animateSlide(entry.target, idx);
+          }
+        });
+      }, { threshold: 0.6 });
+
+      slides.forEach(s => observer.observe(s));
+
+      // ── Dot click navigation ────────────────────────────────────
+      dots.forEach(dot => {
+        dot.addEventListener('click', () => {
+          const idx = parseInt(dot.dataset.slide);
+          slides[idx].scrollIntoView({ behavior: 'smooth' });
+        });
+      });
+
+      // ── Keyboard navigation ─────────────────────────────────────
+      document.addEventListener('keydown', e => {
+        if (e.key === 'ArrowDown' || e.key === ' ') {
+          e.preventDefault();
+          const next = Math.min(currentIndex + 1, slides.length - 1);
+          slides[next].scrollIntoView({ behavior: 'smooth' });
+        }
+        if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          const prev = Math.max(currentIndex - 1, 0);
+          slides[prev].scrollIntoView({ behavior: 'smooth' });
+        }
+        if (e.key === 'Escape') window.location.href = '/';
+      });
+    </script>
+  </body>
+</html>
