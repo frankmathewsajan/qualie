@@ -7,83 +7,76 @@ type GeminiLiveState = 'idle' | 'connecting' | 'live' | 'error';
 // ── Gemini Live API constants ────────────────────────────────────────────────
 const WS_ENDPOINT =
   'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent';
-const MODEL          = 'models/gemini-2.5-flash-native-audio-preview-12-2025';  // Live API v1beta
-const INPUT_RATE     = 16_000;  // Hz we downsample to
-const OUTPUT_RATE    = 24_000;  // Hz Gemini returns PCM at
-const WORKLET_PATH   = '/worklets/aegis-pcm-processor.js';
+const MODEL = 'models/gemini-2.5-flash-native-audio-preview-12-2025';  // Live API v1beta
+const INPUT_RATE = 16_000;  // Hz we downsample to
+const OUTPUT_RATE = 24_000;  // Hz Gemini returns PCM at
+const WORKLET_PATH = '/worklets/aegis-pcm-processor.js';
 const SYSTEM_PROMPT =
-"You are Aegis — a real-time AI safety guardian running on a user's phone.\n\n" +
-"CONTEXT:\n" +
-"The user activated live audio monitoring because they feel unsafe or want a discreet guardian.\n" +
-"You receive a continuous stream of microphone audio. Your job is to LISTEN and PROTECT.\n" +
-"You do NOT narrate, commentate, or make small talk. Silence is your default state.\n\n" +
-"── WHEN TO RESPOND ──\n\n" +
-"① VERIFIED DANGER\n" +
-"Trigger: Audio contains screaming, threats, violence, struggle, crashes, gunfire, " +
-"or urgent phrases like 'help', 'stop', 'get away', 'run', 'fire', 'please no', 'leave me alone'.\n" +
-"Action:\n" +
-"  - Respond IMMEDIATELY in 15 words or fewer.\n" +
-"  - Give specific, actionable safety guidance based on what you hear.\n" +
-"  - Prioritise: escape route then seek people then call for help.\n" +
-"Examples:\n" +
-"  'Leave now. Walk toward the nearest public area.'\n" +
-"  'I hear raised voices. Move to safety, stay near people.'\n" +
-"  'Get to a well-lit area with other people immediately.'\n\n" +
-"② CODE WORD: 'KIWI'\n" +
-"Trigger: User says the word 'kiwi' (any casing).\n" +
-"Meaning: The user wants to communicate discreetly — perhaps someone dangerous is nearby.\n" +
-"Action:\n" +
-"  - Respond calmly and briefly.\n" +
-"  - Ask what they need. Example: 'I am here. What do you need?'\n" +
-"  - If they ask you to call for help, confirm: 'Understood. Keep your phone on.'\n\n" +
-"③ DIRECT QUESTION\n" +
-"Trigger: User directly addresses you by saying 'Aegis' or asks a clear question.\n" +
-"Action:\n" +
-"  - Respond helpfully but concisely (25 words or fewer).\n" +
-"  - Then return to silence.\n\n" +
-"── SILENCE RULES ──\n" +
-"- If none of the above triggers fire, output NOTHING. Empty response.\n" +
-"- Do NOT say 'all clear', 'monitoring', 'I am listening', or any status updates.\n" +
-"- Do NOT respond to ambient noise, music, TV, background chatter.\n" +
-"- Do NOT give preemptive safety advice.\n" +
-"- Do NOT repeat yourself if you already responded to the same event.\n\n" +
-"── VOICE & TONE ──\n" +
-"- Calm, grounded, direct. Like a trusted friend who happens to be a bodyguard.\n" +
-"- Short sentences. No filler. No pleasantries.\n" +
-"- In danger scenarios, be urgent but not panicked.";
+  "You are Aegis — a real-time AI safety guardian running on a user's phone.\n\n" +
+  "CONTEXT:\n" +
+  "The user activated live audio monitoring because they feel unsafe or want a discreet guardian.\n" +
+  "You receive a continuous stream of microphone audio. Your job is to LISTEN and PROTECT.\n" +
+  "You do NOT narrate, commentate, or make small talk. Silence is your default state.\n\n" +
+  "── WHEN TO RESPOND ──\n\n" +
+  "① VERIFIED DANGER\n" +
+  "Trigger: Audio contains screaming, threats, violence, struggle, crashes, gunfire, " +
+  "or urgent phrases like 'help', 'stop', 'get away', 'run', 'fire', 'please no', 'leave me alone'.\n" +
+  "Action:\n" +
+  "  - Respond IMMEDIATELY in 15 words or fewer.\n" +
+  "  - Give specific, actionable safety guidance based on what you hear.\n" +
+  "  - Prioritise: escape route then seek people then call for help.\n" +
+  "Examples:\n" +
+  "  'Leave now. Walk toward the nearest public area.'\n" +
+  "  'I hear raised voices. Move to safety, stay near people.'\n" +
+  "  'Get to a well-lit area with other people immediately.'\n\n" +
+  "② DIRECT QUESTION\n" +
+  "Trigger: User directly addresses you by saying 'Aegis' or asks a clear question.\n" +
+  "Action:\n" +
+  "  - Respond helpfully but concisely (25 words or fewer).\n" +
+  "  - Then return to silence.\n\n" +
+  "── SILENCE RULES ──\n" +
+  "- If none of the above triggers fire, output NOTHING. Empty response.\n" +
+  "- Do NOT say 'all clear', 'monitoring', 'I am listening', or any status updates.\n" +
+  "- Do NOT respond to ambient noise, music, TV, background chatter.\n" +
+  "- Do NOT give preemptive safety advice.\n" +
+  "- Do NOT repeat yourself if you already responded to the same event.\n\n" +
+  "── VOICE & TONE ──\n" +
+  "- Calm, grounded, direct. Like a trusted friend who happens to be a bodyguard.\n" +
+  "- Short sentences. No filler. No pleasantries.\n" +
+  "- In danger scenarios, be urgent but not panicked.";
 
 export interface UseGeminiLiveOptions {
-  onSetupComplete?:   () => void;
-  onSpeakStart?:      () => void;
-  onSpeakEnd?:        () => void;
-  onError?:           (msg: string) => void;
-  onChunksSent?:      (count: number) => void;
+  onSetupComplete?: () => void;
+  onSpeakStart?: () => void;
+  onSpeakEnd?: () => void;
+  onError?: (msg: string) => void;
+  onChunksSent?: (count: number) => void;
   onInputTranscript?: (text: string) => void;
 }
 
 export interface UseGeminiLiveReturn {
-  state:      GeminiLiveState;
+  state: GeminiLiveState;
   isSpeaking: boolean;
-  error:      string | null;
+  error: string | null;
   chunksSent: number;
-  connect:    () => Promise<void>;
+  connect: () => Promise<void>;
   disconnect: () => void;
 }
 
 // ── Server log relay (fire-and-forget, never throws) ─────────────────────────
 function slog(event: string, detail?: unknown) {
   fetch('/api/gemini-log', {
-    method:  'POST',
+    method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ event, detail }),
-  }).catch(() => {});
+    body: JSON.stringify({ event, detail }),
+  }).catch(() => { });
 }
 
 // ── Tiny helpers ─────────────────────────────────────────────────────────────
 function ab2b64(buf: ArrayBuffer): string {
   // Chunk to avoid stack overflow on large buffers
-  const u8    = new Uint8Array(buf);
-  let s       = '';
+  const u8 = new Uint8Array(buf);
+  let s = '';
   const CHUNK = 8192;
   for (let i = 0; i < u8.length; i += CHUNK) {
     s += String.fromCharCode(...Array.from(u8.subarray(i, i + CHUNK)));
@@ -93,7 +86,7 @@ function ab2b64(buf: ArrayBuffer): string {
 
 function b642i16(b64: string): Int16Array {
   const binary = atob(b64);
-  const u8     = new Uint8Array(binary.length);
+  const u8 = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) u8[i] = binary.charCodeAt(i);
   return new Int16Array(u8.buffer);
 }
@@ -105,31 +98,31 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}): UseGeminiLiveRet
   // so callbacks always see the latest opts before any user interaction can fire them).
   useLayoutEffect(() => { Object.assign(optsRef.current, opts); });
 
-  const [state,      setState]      = useState<GeminiLiveState>('idle');
+  const [state, setState] = useState<GeminiLiveState>('idle');
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [error,      setError]      = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [chunksSent, setChunksSent] = useState(0);
 
   // Internal refs so closures always see latest values
-  const wsRef             = useRef<WebSocket | null>(null);
-  const ctxRef            = useRef<AudioContext | null>(null);
-  const streamRef         = useRef<MediaStream | null>(null);
-  const workletRef        = useRef<AudioWorkletNode | null>(null);
-  const sourceRef         = useRef<MediaStreamAudioSourceNode | null>(null);
-  const gainRef           = useRef<GainNode | null>(null);
-  const playheadRef       = useRef(0);  // scheduled playback cursor (ctx.currentTime)
-  const speakTimerRef     = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const chunkCountRef     = useRef(0);
-  const logThrottleRef    = useRef(0);
+  const wsRef = useRef<WebSocket | null>(null);
+  const ctxRef = useRef<AudioContext | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const workletRef = useRef<AudioWorkletNode | null>(null);
+  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const gainRef = useRef<GainNode | null>(null);
+  const playheadRef = useRef(0);  // scheduled playback cursor (ctx.currentTime)
+  const speakTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const chunkCountRef = useRef(0);
+  const logThrottleRef = useRef(0);
 
   // ── DSP chain refs (created once per session) ──────────────────────────────
-  const compressorRef     = useRef<DynamicsCompressorNode | null>(null);
-  const filterRef         = useRef<BiquadFilterNode | null>(null);
+  const compressorRef = useRef<DynamicsCompressorNode | null>(null);
+  const filterRef = useRef<BiquadFilterNode | null>(null);
 
   // ── Barge-in: track every scheduled output node so we can stop them all ───
-  const scheduledNodesRef  = useRef<AudioBufferSourceNode[]>([]);
+  const scheduledNodesRef = useRef<AudioBufferSourceNode[]>([]);
   // Consecutive-chunk counter for barge-in debounce (prevents echo/noise false triggers)
-  const bargeInConsecRef   = useRef(0);
+  const bargeInConsecRef = useRef(0);
 
   // ── Barge-in: immediately stop all queued Gemini audio ─────────────────────
   const flushPlaybackQueue = useCallback(() => {
@@ -153,9 +146,9 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}): UseGeminiLiveRet
   //   Bandpass at 1500 Hz / Q 0.5 rolls off robotic high-end and gives
   //   a warm, tactical-radio earpiece presence.
   const scheduleAudio = useCallback((i16: Int16Array) => {
-    const ctx        = ctxRef.current;
+    const ctx = ctxRef.current;
     const compressor = compressorRef.current;
-    const filter     = filterRef.current;
+    const filter = filterRef.current;
     if (!ctx || !compressor || !filter || !i16.length) return;
 
     const f32 = new Float32Array(i16.length);
@@ -171,7 +164,7 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}): UseGeminiLiveRet
     src.connect(compressor);
 
     // Tight scheduling: 5 ms lookahead, chain chunks back-to-back
-    const now     = ctx.currentTime;
+    const now = ctx.currentTime;
     const startAt = Math.max(now + 0.005, playheadRef.current);
     src.start(startAt);
     playheadRef.current = startAt + buf.duration;
@@ -229,10 +222,10 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}): UseGeminiLiveRet
     wsRef.current?.close();
     wsRef.current = null;
 
-    ctxRef.current?.close().catch(() => {});
+    ctxRef.current?.close().catch(() => { });
     ctxRef.current = null;
 
-    playheadRef.current   = 0;
+    playheadRef.current = 0;
     chunkCountRef.current = 0;
     setChunksSent(0);
     setState('idle');
@@ -277,17 +270,17 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}): UseGeminiLiveRet
       //     rolls off robotic hiss and adds a warm tactical-radio presence
       const compressor = ctx.createDynamicsCompressor();
       compressor.threshold.value = -24;
-      compressor.knee.value      = 30;
-      compressor.ratio.value     = 12;
-      compressor.attack.value    = 0.003;
-      compressor.release.value   = 0.25;
-      compressorRef.current      = compressor;
+      compressor.knee.value = 30;
+      compressor.ratio.value = 12;
+      compressor.attack.value = 0.003;
+      compressor.release.value = 0.25;
+      compressorRef.current = compressor;
 
-      const filter   = ctx.createBiquadFilter();
-      filter.type    = 'bandpass';
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
       filter.frequency.value = 1500;
-      filter.Q.value         = 0.5;
-      filterRef.current      = filter;
+      filter.Q.value = 0.5;
+      filterRef.current = filter;
 
       // Wire the static part of the DSP chain (sources connect to compressor dynamically)
       compressor.connect(filter);
@@ -313,7 +306,7 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}): UseGeminiLiveRet
 
       const wsReady = new Promise<void>((resolve, reject) => {
         const t = setTimeout(() => reject(new Error('WebSocket timeout (8 s)')), 8_000);
-        ws.addEventListener('open',  () => { clearTimeout(t); resolve(); },        { once: true });
+        ws.addEventListener('open', () => { clearTimeout(t); resolve(); }, { once: true });
         ws.addEventListener('error', () => { clearTimeout(t); reject(new Error('WebSocket failed to open')); }, { once: true });
       });
 
@@ -321,10 +314,10 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}): UseGeminiLiveRet
         // Leg A: microphone acquisition
         navigator.mediaDevices.getUserMedia({
           audio: {
-            channelCount:     1,
+            channelCount: 1,
             echoCancellation: true,
             noiseSuppression: true,
-            autoGainControl:  true,
+            autoGainControl: true,
           },
         }).then(s => { slog('microphone_acquired'); return s; }),
 
@@ -354,11 +347,11 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}): UseGeminiLiveRet
           // Tune VAD for faster turn detection: low silence threshold, tight end-of-speech
           realtimeInputConfig: {
             automaticActivityDetection: {
-              disabled:              false,
+              disabled: false,
               startOfSpeechSensitivity: 'START_SENSITIVITY_HIGH',
-              endOfSpeechSensitivity:   'END_SENSITIVITY_HIGH',
-              prefixPaddingMs:          20,
-              silenceDurationMs:        250,  // 250ms: short enough for fast turns, long enough for natural pauses between words
+              endOfSpeechSensitivity: 'END_SENSITIVITY_HIGH',
+              prefixPaddingMs: 20,
+              silenceDurationMs: 250,  // 250ms: short enough for fast turns, long enough for natural pauses between words
             },
           },
           systemInstruction: {
@@ -396,14 +389,14 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}): UseGeminiLiveRet
 
         // Gemini Live returns audio via serverContent.modelTurn.parts[].inlineData
         // Support both camelCase and snake_case (proto3 JSON may return either)
-        type GeminiContent = { parts?: Array<Record<string,unknown>> } | undefined;
-        const sc  = (msg.serverContent ?? msg.server_content) as Record<string, unknown> | undefined;
+        type GeminiContent = { parts?: Array<Record<string, unknown>> } | undefined;
+        const sc = (msg.serverContent ?? msg.server_content) as Record<string, unknown> | undefined;
         const turn = (sc?.modelTurn ?? sc?.model_turn) as GeminiContent;
         const parts: Array<Record<string, unknown>> = turn?.parts ?? [];
         for (const part of parts) {
           const data =
-            (part.inlineData as Record<string,string> | undefined)?.data ??
-            (part.inline_data as Record<string,string> | undefined)?.data;
+            (part.inlineData as Record<string, string> | undefined)?.data ??
+            (part.inline_data as Record<string, string> | undefined)?.data;
           if (data) scheduleAudio(b642i16(data));
 
           const txt = part.text as string | undefined;
