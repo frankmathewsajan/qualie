@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import {
   Mic, Home, PhoneCall, Droplets, Wind,
-  MapPin, AlertTriangle, Navigation, Thermometer, ChevronRight, Settings, EyeOff
+  MapPin, AlertTriangle, Navigation, Thermometer, ChevronRight, Settings, EyeOff, BellRing
 } from 'lucide-react';
 import { useAudioMeter } from '@/hooks/useAudioMeter';
 import { useWeather, decodeWeather } from '@/hooks/useWeather';
@@ -254,49 +254,6 @@ export default function ListenPage() {
       if (lower.includes('send emergency message') || lower.includes('send sos')) {
         console.log('[listen] emergency command detected — triggering WhatsApp SOS');
         triggerWhatsAppSOS();
-      }
-
-      if (lower.includes('decoy')) {
-        console.log('[listen] decoy triggered');
-        const ctx = audioCtxRef.current;
-        if (!ctx) {
-          console.warn('[decoy] AudioContext not initialized yet.');
-          return;
-        }
-
-        try {
-          if (ctx.state === 'suspended') {
-            ctx.resume();
-          }
-
-          const osc = ctx.createOscillator();
-          const gainNode = ctx.createGain();
-          const mod = ctx.createOscillator();
-          const modGain = ctx.createGain();
-          
-          osc.type = 'square';
-          mod.type = 'sine';
-          mod.frequency.value = 6; // siren sweep speed
-          
-          modGain.gain.value = 400; // frequency swing amount
-          osc.frequency.value = 800; // base frequency
-          
-          mod.connect(modGain);
-          modGain.connect(osc.frequency);
-          
-          osc.connect(gainNode);
-          gainNode.connect(ctx.destination);
-          
-          osc.start();
-          mod.start();
-          
-          setTimeout(() => {
-            osc.stop();
-            mod.stop();
-          }, 10000); // Blast for 10 seconds
-        } catch (err) {
-          console.error('[decoy] failed to play siren:', err);
-        }
       }
     },
   });
@@ -659,6 +616,48 @@ export default function ListenPage() {
       } else {
         doStart();
       }
+    }
+  };
+
+  const playAlarm = () => {
+    const ctx = audioCtxRef.current;
+    if (!ctx) {
+      console.warn('[alarm] AudioContext not initialized yet.');
+      return;
+    }
+
+    try {
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      const mod = ctx.createOscillator();
+      const modGain = ctx.createGain();
+      
+      osc.type = 'square';
+      mod.type = 'sine';
+      mod.frequency.value = 6; // siren sweep speed
+      
+      modGain.gain.value = 400; // frequency swing amount
+      osc.frequency.value = 800; // base frequency
+      
+      mod.connect(modGain);
+      modGain.connect(osc.frequency);
+      
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      
+      osc.start();
+      mod.start();
+      
+      setTimeout(() => {
+        osc.stop();
+        mod.stop();
+      }, 10000); // Blast for 10 seconds
+    } catch (err) {
+      console.error('[alarm] failed to play siren:', err);
     }
   };
 
@@ -1027,10 +1026,19 @@ export default function ListenPage() {
               {/* SOS Button */}
               <button onClick={triggerWhatsAppSOS}
                 className="group flex flex-col items-center gap-1 transition-all">
-                <div className="w-14 h-14 rounded-2xl bg-red-500 hover:bg-red-600 active:scale-95 flex items-center justify-center shadow-lg shadow-red-200/50 border border-red-400 transition-all">
-                  <PhoneCall className="w-5 h-5 text-white" />
+                <div className="w-14 h-14 rounded-2xl bg-[#0f1011] hover:bg-black active:scale-95 flex items-center justify-center shadow-lg border border-slate-700 transition-all">
+                  <PhoneCall className="w-5 h-5 text-slate-300" />
                 </div>
-                <span className="text-[9px] font-bold text-red-500 uppercase tracking-widest">SOS</span>
+                <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">SOS</span>
+              </button>
+
+              {/* Alarm Button */}
+              <button onClick={playAlarm}
+                className="group flex flex-col items-center gap-1 transition-all z-10">
+                <div className="w-14 h-14 rounded-2xl bg-amber-500 hover:bg-amber-600 active:scale-95 flex items-center justify-center shadow-lg shadow-amber-200/50 border border-amber-400 transition-all">
+                  <BellRing className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-[9px] font-bold text-amber-500 uppercase tracking-widest z-10">Alarm</span>
               </button>
               {/* Listen pill */}
               <div className="flex items-center gap-3 bg-white/60 backdrop-blur-sm rounded-2xl px-5 py-3 shadow-sm border border-white/80">

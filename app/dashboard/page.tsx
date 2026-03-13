@@ -24,7 +24,10 @@ export default function DashboardPage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
-  const startRecording = async () => {
+  const startRecording = async (e?: any) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (mediaRecorderRef.current) return; // Prevent double-triggering
+    
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
@@ -70,9 +73,13 @@ export default function DashboardPage() {
     }
   };
 
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
+  const stopRecording = (e?: any) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (mediaRecorderRef.current) {
+      if (mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
+      }
+      mediaRecorderRef.current = null; // Clear ref instantly to prevent duplicate processing
       setIsRecording(false);
     }
   };
