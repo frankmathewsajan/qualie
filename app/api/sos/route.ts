@@ -83,29 +83,8 @@ export async function GET(req: NextRequest) {
     console.warn('[sos/GET] could not load alerts:', (error as any)?.message);
   }
 
-  // Step 3: fetch latest images — only where(), sort in JS
-  let images: any[] = [];
-  try {
-    const imagesQ = query(
-      collection(db, 'alert_images'),
-      where('userId', '==', userId),
-      limit(20)
-    );
-    const imagesSnap = await getDocs(imagesQ);
-    images = imagesSnap.docs
-      .map(d => ({
-        id: d.id,
-        imageBase64: d.data().image || d.data().imageBase64 || '',  // 'image' is the actual field name
-        context: d.data().context || '',
-        timestamp: d.data().timestamp?.toDate?.()?.toISOString() ?? '',
-        _ms: d.data().timestamp?.toMillis?.() ?? (d.data().timestamp?.seconds ?? 0) * 1000,
-      }))
-      .sort((a, b) => b._ms - a._ms)
-      .slice(0, 4)
-      .map(({ _ms, ...rest }) => rest);
-  } catch (error) {
-    console.warn('[sos/GET] could not load images:', (error as any)?.message);
-  }
+  // Images are now fetched directly from Firestore on the client side
+  // to avoid massive base64 payloads exceeding response size limits.
 
   return NextResponse.json({
     session: {
@@ -117,6 +96,6 @@ export async function GET(req: NextRequest) {
       active: session.active,
     },
     latestAlert,
-    images,
   });
 }
+

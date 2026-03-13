@@ -3,8 +3,10 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import {
   Shield, MapPin, Clock, AlertTriangle, Camera,
-  Navigation, ChevronDown, Signal, User, Phone
+  Navigation, Signal, User, Phone
 } from 'lucide-react';
+import { db } from '@/lib/firebase';
+import { collection, query, where, limit, getDocs } from 'firebase/firestore';
 
 interface SOSSession {
   userId: string;
@@ -26,7 +28,7 @@ interface LatestAlert {
 
 interface SOSImage {
   id: string;
-  imageBase64: string;
+  image: string;      // base64 data URL
   context: string;
   timestamp: string;
 }
@@ -78,7 +80,6 @@ export default function SOSPage() {
       () => { /* silently fail */ },
       { enableHighAccuracy: true, timeout: 10000 }
     );
-    // Watch for updates
     const watchId = navigator.geolocation.watchPosition(
       (pos) => setMyLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
       () => {},
@@ -87,6 +88,7 @@ export default function SOSPage() {
     return () => navigator.geolocation.clearWatch(watchId);
   }, []);
 
+  // Fetch session + alert data from the lightweight API (no images)
   const fetchData = useCallback(async () => {
     if (!sessionId) return;
     try {
@@ -100,9 +102,35 @@ export default function SOSPage() {
       const data = await res.json();
       setSession(data.session);
       setAlert(data.latestAlert);
-      setImages(data.images ?? []);
       setLastRefresh(new Date());
       setError(null);
+
+      // Now fetch images directly from Firestore client-side
+      // This avoids sending massive base64 payloads through the API response
+      if (data.session?.userId) {
+        try {
+          const imagesQ = query(
+            collection(db, 'alert_images'),
+            where('userId', '==', data.session.userId),
+            limit(20)
+          );
+          const imagesSnap = await getDocs(imagesQ);
+          const imgs = imagesSnap.docs
+            .map(d => ({
+              id: d.id,
+              image: d.data().image || '',
+              context: d.data().context || '',
+              timestamp: d.data().timestamp?.toDate?.()?.toISOString() ?? '',
+              _ms: d.data().timestamp?.toMillis?.() ?? (d.data().timestamp?.seconds ?? 0) * 1000,
+            }))
+            .sort((a, b) => b._ms - a._ms)
+            .slice(0, 6)
+            .map(({ _ms, ...rest }) => rest);
+          setImages(imgs);
+        } catch (imgErr) {
+          console.warn('[sos] could not load images from Firestore:', imgErr);
+        }
+      }
     } catch {
       setError('Failed to connect. Check your internet connection.');
     } finally {
@@ -318,7 +346,7 @@ export default function SOSPage() {
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={img.imageBase64}
+                    src={img.image}
                     alt="Captured"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
@@ -366,7 +394,7 @@ export default function SOSPage() {
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={expandedImg.imageBase64}
+              src={expandedImg.image}
               alt="Captured"
               className="w-full max-h-[50vh] object-contain bg-black"
             />
