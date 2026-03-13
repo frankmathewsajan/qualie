@@ -44,7 +44,7 @@ export function ClusterList({ clusters, onSelectUser }: ClusterListProps) {
             </p>
             {cluster.analyses && (
               <p className="text-[10px] text-white/30 mt-2 leading-relaxed">
-                {cluster.analyses.length > 100 ? cluster.analyses.slice(0, 100) + '…' : cluster.analyses}
+                {cluster.analyses}
               </p>
             )}
             {onSelectUser && cluster.userIds.length > 0 && (() => {

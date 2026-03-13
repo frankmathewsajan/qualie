@@ -211,11 +211,18 @@ export default function ListenPage() {
         `I may be in danger. Please check on me immediately.`
       );
 
-      // 5. Clean phone number (strip spaces, dashes) and open wa.me link
+      // 5. Clean phone number (strip spaces, dashes) and open WhatsApp
       const cleanPhone = phone.replace(/[\s\-()]/g, '');
-      const waUrl = `https://wa.me/${cleanPhone}?text=${msg}`;
-      window.open(waUrl, '_blank');
-      console.log('[listen] WhatsApp SOS triggered via wa.me');
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      
+      if (isMobile) {
+        // Deep link directly to the WhatsApp app on mobile devices
+        window.location.href = `whatsapp://send?phone=${cleanPhone}&text=${msg}`;
+      } else {
+        // Fallback to web WhatsApp on desktop
+        window.open(`https://wa.me/${cleanPhone}?text=${msg}`, '_blank');
+      }
+      console.log('[listen] WhatsApp SOS triggered');
     } catch (error) {
       console.error('Error triggering WhatsApp SOS:', error);
     }
@@ -347,6 +354,9 @@ export default function ListenPage() {
       }
 
       setBackendStep('compressing');
+      
+      // Wait 3.5 seconds to capture post-trigger context so the audio clip isn't too short
+      await new Promise(r => setTimeout(r, 3500));
       const blob = await getBlob();
       // Save a local copy so the user can play it back
       if (playbackUrlRef.current) URL.revokeObjectURL(playbackUrlRef.current);
