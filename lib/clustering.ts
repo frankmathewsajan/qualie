@@ -46,7 +46,7 @@ export async function clusterAlerts() {
         confidence: avgConfidence,
         eventTypes,
         count: cluster.length,
-        analyses: cluster.map(a => a.analysis || 'No analysis').join('; '),
+        analyses: cluster.map(a => `User ${a.userId || 'Unknown'}:\n${a.analysis || 'No analysis'}`).join('\n\n---\n\n'),
       });
     }
   }

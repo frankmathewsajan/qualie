@@ -119,14 +119,14 @@ export async function POST(req: NextRequest) {
         );
         log('GEMINI', 'Analysis complete', `${Date.now() - tG} ms`);
         console.log('');
-        console.log('┌─ Gemini Analysis ' + SEP.slice(18));
+        console.log('┌─ Aegis AI Analysis ' + SEP.slice(18));
         analysis.split('\n').forEach(line => console.log('│ ' + line));
         console.log('└' + SEP);
         console.log('');
       } catch (geminiErr) {
         const msg = geminiErr instanceof Error ? geminiErr.message : String(geminiErr);
         log('GEMINI', 'ERROR', msg);
-        analysis = 'Gemini analysis failed: ' + msg;
+        analysis = 'Aegis AI analysis failed: ' + msg;
       }
     }
 

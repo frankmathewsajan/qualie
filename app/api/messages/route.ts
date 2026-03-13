@@ -4,10 +4,12 @@ import { collection, addDoc, Timestamp } from 'firebase/firestore';
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId, message, operatorId } = await req.json();
+    const { userId, message, audioBase64, operatorId } = await req.json();
+
+    console.log(`[POST /api/messages] Handling message for user ${userId}`);
 
     // Store message in Firestore
-    await addDoc(collection(db, 'messages'), {
+    const docData: any = {
       userId,
       message,
       operatorId,
@@ -15,13 +17,17 @@ export async function POST(req: NextRequest) {
       type: 'agency_ping',
       delivered: true, // Mark as delivered immediately since we're storing it
       acknowledged: false,
-    });
+    };
+    
+    if (audioBase64) {
+      docData.audioBase64 = audioBase64;
+    }
 
-    // Trigger push notification via Firebase Cloud Messaging
-    // (Implementation would call FCM API here)
+    await addDoc(collection(db, 'messages'), docData);
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    console.error('Failed to send message:', error);
     return NextResponse.json({ error: 'Failed to send message' }, { status: 500 });
   }
 }

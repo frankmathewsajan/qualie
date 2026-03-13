@@ -2,18 +2,80 @@
 import { useClusters } from '@/hooks/useClusters';
 import { ClusterMap } from '@/components/dashboard/ClusterMap';
 import { ClusterList } from '@/components/dashboard/ClusterList';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
 import {
   Shield, RefreshCcw, Send, X, AlertTriangle,
-  Activity, Users, Flame,
+  Activity, Users, Flame, Mic, Search, Camera
 } from 'lucide-react';
+import { useAlertImages } from '@/hooks/useAlertImages';
 
 export default function DashboardPage() {
-  const { clusters, loading, refetch } = useClusters();
+  const { clusters: allClusters, loading, refetch } = useClusters();
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [message, setMessage] = useState('');
   const [sendStatus, setSendStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const alertImages = useAlertImages(20);
+  const [expandedImage, setExpandedImage] = useState<string | null>(null);
+
+  // Audio Recording (Voice of God)
+  const [isRecording, setIsRecording] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      mediaRecorderRef.current = mediaRecorder;
+      chunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        const reader = new FileReader();
+        reader.readAsDataURL(audioBlob);
+        reader.onloadend = async () => {
+          const base64data = reader.result as string;
+          setSendStatus('sending');
+          try {
+            const response = await fetch('/api/messages', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                userId: selectedUser, 
+                message: '🎙️ Live Operator Audio Broadcast', 
+                audioBase64: base64data,
+                operatorId: 'operator-1' 
+              }),
+            });
+            if (response.ok) {
+              setSendStatus('sent');
+              setTimeout(() => { setSendStatus('idle'); setSelectedUser(null); setMessage(''); }, 2000);
+            } else { setSendStatus('error'); }
+          } catch { setSendStatus('error'); }
+        };
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      console.error('Error accessing microphone', err);
+      alert('Could not access microphone.');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
 
   const sendMessage = async () => {
     if (!selectedUser || !message) return;
@@ -41,6 +103,13 @@ export default function DashboardPage() {
     }
   };
 
+  const clusters = allClusters.filter(c => 
+    (c.id && c.id.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (c.eventTypes && c.eventTypes.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()))) ||
+    (c.userIds && c.userIds.some(u => u.toLowerCase().includes(searchQuery.toLowerCase()))) ||
+    (c.analyses && c.analyses.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
   const totalAlerts = clusters.reduce((sum, c) => sum + c.count, 0);
   const highConfidence = clusters.filter(c => c.confidence > 0.8).length;
 
@@ -59,6 +128,29 @@ export default function DashboardPage() {
             <p className="text-[10px] font-mono text-white/30 mt-px">Emergency Response Console</p>
           </div>
         </div>
+
+        {/* Search Bar */}
+        <div className="flex-1 max-w-md mx-8 hidden md:block">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+            <input
+              type="text"
+              placeholder="Search clusters, users, events..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/30 transition-all shadow-inner"
+            />
+            {searchQuery && (
+              <button 
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-white/30 hover:text-white/60 transition-colors rounded-md"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+
         <div className="flex items-center gap-2">
           <Link href="/listen"
             className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 rounded-xl px-3 py-2 border border-white/10 text-white/50 hover:text-white/80 transition-all text-xs font-medium">
@@ -107,7 +199,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2 mt-2">
               <button
                 onClick={sendMessage}
-                disabled={sendStatus === 'sending' || !message.trim()}
+                disabled={sendStatus === 'sending' || (!message.trim() && !isRecording)}
                 className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all disabled:opacity-40 ${
                   sendStatus === 'sent'
                     ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
@@ -117,10 +209,28 @@ export default function DashboardPage() {
                 }`}
               >
                 {sendStatus === 'sending' && <div className="w-3 h-3 rounded-full border-[1.5px] border-white/30 animate-spin" style={{ borderTopColor: 'white' }} />}
-                {sendStatus === 'sent' ? '✓ Delivered' : sendStatus === 'error' ? '✗ Failed' : sendStatus === 'sending' ? 'Sending…' : 'Send Message'}
+                {sendStatus === 'sent' ? '✓ Delivered' : sendStatus === 'error' ? '✗ Failed' : sendStatus === 'sending' ? 'Sending…' : 'Send Text'}
               </button>
+
+              <button
+                onMouseDown={startRecording}
+                onMouseUp={stopRecording}
+                onMouseLeave={stopRecording}
+                onTouchStart={startRecording}
+                onTouchEnd={stopRecording}
+                disabled={sendStatus === 'sending' || sendStatus === 'sent'}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold shadow-md transition-all active:scale-95 disabled:opacity-40 ${
+                  isRecording 
+                    ? 'bg-red-600 text-white shadow-red-500/50 scale-105' 
+                    : 'bg-white/10 hover:bg-white/20 text-white border border-white/10'
+                }`}
+              >
+                <Mic className={`w-3.5 h-3.5 ${isRecording ? 'animate-pulse text-white' : 'text-slate-300'}`} />
+                {isRecording ? 'Recording! Release to Send' : 'Hold to Speak'}
+              </button>
+
               {sendStatus === 'error' && (
-                <span className="text-[10px] text-red-400/60">Check console for details</span>
+                <span className="text-[10px] text-red-400/60 ml-2">Check console for details</span>
               )}
             </div>
           </div>
@@ -219,9 +329,47 @@ export default function DashboardPage() {
                 ))}
               </div>
             )}
+
+            {/* Captured Images */}
+            {alertImages.length > 0 && (
+              <div className="pt-2">
+                <div className="flex items-center gap-2 mb-2">
+                  <Camera className="w-3 h-3 text-indigo-400" />
+                  <p className="text-[10px] text-white/20 uppercase tracking-wider font-semibold">Silent Cam Captures</p>
+                  <span className="ml-auto text-[9px] text-white/30 font-mono">{alertImages.length}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {alertImages.map(img => (
+                    <div key={img.id} className="relative group cursor-pointer" onClick={() => setExpandedImage(img.image)}>
+                      <img
+                        src={img.image}
+                        alt={`Capture from ${img.userId}`}
+                        className="w-full aspect-[4/3] object-cover rounded-lg border border-white/10 hover:border-indigo-500/40 transition-all"
+                      />
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-1.5 rounded-b-lg">
+                        <p className="text-[8px] text-white/70 font-mono truncate">{img.userId}</p>
+                        <p className="text-[7px] text-white/40">{img.timestamp.toLocaleTimeString()}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Expanded Image Modal */}
+      {expandedImage && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-8" onClick={() => setExpandedImage(null)}>
+          <div className="relative max-w-3xl max-h-[80vh]">
+            <img src={expandedImage} alt="Expanded capture" className="max-w-full max-h-[80vh] object-contain rounded-xl border border-white/20 shadow-2xl" />
+            <button onClick={() => setExpandedImage(null)} className="absolute -top-3 -right-3 w-8 h-8 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white border border-white/20">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

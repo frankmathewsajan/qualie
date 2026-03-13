@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import {
   Mic, Home, PhoneCall, Droplets, Wind,
-  MapPin, AlertTriangle, Navigation, Thermometer, ChevronRight, Settings,
+  MapPin, AlertTriangle, Navigation, Thermometer, ChevronRight, Settings, EyeOff
 } from 'lucide-react';
 import { useAudioMeter } from '@/hooks/useAudioMeter';
 import { useWeather, decodeWeather } from '@/hooks/useWeather';
@@ -196,8 +196,8 @@ export default function ListenPage() {
         return;
       }
 
-      // 3. Get location for the Maps link
-      const loc = await ensureLocation();
+      // 3. Use cached location to avoid async delay (which causes popup blockers)
+      const loc = location;
       const mapsLink = loc
         ? `https://maps.google.com/?q=${loc.lat},${loc.lon}`
         : '(location unavailable)';
@@ -211,22 +211,25 @@ export default function ListenPage() {
         `I may be in danger. Please check on me immediately.`
       );
 
-      // 5. Clean phone number (strip spaces, dashes) and open WhatsApp
+      // 5. Open WhatsApp using invisible anchor-click trick
+      //    This bypasses popup blockers AND ERR_BLOCKED_BY_RESPONSE on all browsers
       const cleanPhone = phone.replace(/[\s\-()]/g, '');
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const waUrl = `https://wa.me/${cleanPhone}?text=${msg}`;
       
-      if (isMobile) {
-        // Deep link directly to the WhatsApp app on mobile devices
-        window.location.href = `whatsapp://send?phone=${cleanPhone}&text=${msg}`;
-      } else {
-        // Fallback to web WhatsApp on desktop
-        window.open(`https://wa.me/${cleanPhone}?text=${msg}`, '_blank');
-      }
+      const a = document.createElement('a');
+      a.href = waUrl;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => document.body.removeChild(a), 100);
+
       console.log('[listen] WhatsApp SOS triggered');
     } catch (error) {
       console.error('Error triggering WhatsApp SOS:', error);
     }
-  }, [ensureLocation, currentUserId]);
+  }, [currentUserId, location]);
 
   const { state: geminiState, isSpeaking, chunksSent,
           connect: geminiConnect, disconnect: geminiDisconnect } = useGeminiLive({
@@ -247,6 +250,13 @@ export default function ListenPage() {
         console.log('[listen] emergency command detected — triggering WhatsApp SOS');
         triggerWhatsAppSOS();
       }
+
+      if (lower.includes('decoy')) {
+        console.log('[listen] decoy triggered');
+        const audio = new Audio('https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg');
+        audio.volume = 1;
+        audio.play().catch(()=>{});
+      }
     },
   });
 
@@ -260,7 +270,10 @@ export default function ListenPage() {
   const [backendStep, setBackendStep]       = useState<'compressing'|'uploading'|'analysing'|'done'|null>(null);
   const [analysisMs, setAnalysisMs]         = useState<number | null>(null);
   const [audioPlaybackUrl, setAudioPlaybackUrl] = useState<string | null>(null);
-  const [lastTranscript, setLastTranscript]       = useState<string | null>(null);
+  const [lastTranscript, setLastTranscript]     = useState<string | null>(null);
+  const [stealthMode, setStealthMode]           = useState(false);
+  
+  const videoRef          = useRef<HTMLVideoElement | null>(null);
 
   const timerRef          = useRef<ReturnType<typeof setInterval> | null>(null);
   const sentRef           = useRef(false);
@@ -418,15 +431,123 @@ export default function ListenPage() {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [isRecording]);
 
-  // ── message alerts ─────────────────────────────────────────────────────────
+  // ── message alerts & Voice of God ──────────────────────────────────────────
   useEffect(() => {
-    if (messages.length > 0 && !showMessageAlert) {
-      const latestMessage = messages[0]; // Most recent message
+    if (messages.length > 0) {
+      const latestMessage = messages[0];
       if (!latestMessage.acknowledged) {
-        setShowMessageAlert(latestMessage);
+        if (!showMessageAlert || showMessageAlert.id !== latestMessage.id) {
+          setShowMessageAlert(latestMessage);
+          
+          // Try to autoplay, but don't strictly require it (since mobile blocks it). 
+          // The UI will also show an explicit Play button.
+          if (latestMessage.audioBase64) {
+            const audio = new Audio(latestMessage.audioBase64);
+            audio.volume = 1;
+            audio.play().catch(e => console.warn('Audio autoplay blocked by browser', e));
+          }
+        }
       }
     }
   }, [messages, showMessageAlert]);
+
+  // ── dead man switch heartbeat ──────────────────────────────────────────────
+  useEffect(() => {
+    if (!isRecording || !currentUserId || !location) return;
+    let interval: ReturnType<typeof setInterval>;
+    
+    Promise.all([
+      import('firebase/firestore'),
+      import('@/lib/firebase')
+    ]).then(([{ doc, setDoc, Timestamp }, { db }]) => {
+      interval = setInterval(() => {
+        setDoc(doc(db, 'users', currentUserId), {
+          lastHeartbeat: Timestamp.now(),
+          lastLocation: { lat: location.lat, lng: location.lon },
+          isRecording: true
+        }, { merge: true }).catch(() => {});
+      }, 5000);
+    });
+
+    return () => {
+      if (interval) clearInterval(interval);
+      import('firebase/firestore').then(({ doc, setDoc }) => {
+        import('@/lib/firebase').then(({ db }) => {
+           setDoc(doc(db, 'users', currentUserId), { isRecording: false }, { merge: true }).catch(()=>{});
+        });
+      });
+    };
+  }, [isRecording, currentUserId, location]);
+
+  // ── silent camera burst (only activates on breach) ─────────────────────────────
+  useEffect(() => {
+    if (!breached || !isRecording || !currentUserId) return;
+    
+    let interval: ReturnType<typeof setInterval> | null = null;
+    let camStream: MediaStream | null = null;
+    let isFrontCam = true;
+
+    const captureAndUpload = async () => {
+      try {
+        if (camStream) {
+          camStream.getTracks().forEach(t => t.stop());
+        }
+        
+        camStream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: isFrontCam ? 'user' : 'environment', width: 640, height: 480 } 
+        });
+
+        if (!videoRef.current) return;
+        videoRef.current.srcObject = camStream;
+        await videoRef.current.play().catch(() => {});
+        
+        // Wait 800ms for hardware auto-focus/exposure to settle
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        const vw = videoRef.current.videoWidth;
+        const vh = videoRef.current.videoHeight;
+        if (!vw || !vh) { console.warn('[camera] video not ready yet'); return; }
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = vw;
+        canvas.height = vh;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        
+        ctx.drawImage(videoRef.current, 0, 0, vw, vh);
+        const base64 = canvas.toDataURL('image/jpeg', 0.5);
+        
+        console.log(`[camera] captured ${isFrontCam ? 'front' : 'back'} frame`, vw, 'x', vh, 'size:', Math.round(base64.length / 1024), 'KB');
+        
+        fetch('/api/alert/images', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: currentUserId,
+            imageBase64: base64,
+            lat: location?.lat || 0,
+            lng: location?.lon || 0
+          })
+        }).catch(e => console.error('[camera] upload failed:', e));
+
+        // Toggle camera for next interval
+        isFrontCam = !isFrontCam;
+
+      } catch (err: any) {
+        console.warn('[camera] access denied or unavailable:', err.message);
+      }
+    };
+
+    // Trigger first capture instantly, then run every 5s
+    captureAndUpload();
+    interval = setInterval(captureAndUpload, 5000);
+
+    return () => {
+      if (interval) clearInterval(interval);
+      if (camStream) camStream.getTracks().forEach(t => t.stop());
+      if (videoRef.current) videoRef.current.srcObject = null;
+    };
+  }, [breached, isRecording, currentUserId, location]);
 
   const dismissMessageAlert = () => {
     if (showMessageAlert) {
@@ -463,8 +584,32 @@ export default function ListenPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col font-sans select-none"
+    <div className="min-h-screen flex flex-col font-sans select-none overflow-x-hidden transition-colors duration-1000"
          style={{ background: bg, transition: 'background 1.2s ease' }}>
+      
+      <video ref={videoRef} autoPlay playsInline muted className="absolute w-[1px] h-[1px] opacity-0 pointer-events-none" />
+
+      {/* ── Stealth Mode Overlay ────────────────────────────────────────── */}
+      {stealthMode && (
+        <div 
+          onDoubleClick={() => setStealthMode(false)}
+          className="fixed inset-0 z-[99999] bg-black text-white flex flex-col items-center justify-start pt-32 cursor-pointer select-none"
+        >
+          {/* Fake Lock Screen */}
+          <div className="text-center opacity-80">
+            <h1 className="text-6xl font-extralight tracking-tight mb-2">
+              {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </h1>
+            <p className="text-xl font-light text-gray-400">
+              {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+            </p>
+          </div>
+          <div className="absolute bottom-8 left-0 right-0 text-center opacity-50">
+            <div className="w-32 h-1 bg-white mx-auto rounded-full" />
+            <p className="text-[10px] uppercase font-bold mt-2 tracking-widest text-[#111]">Double tap to exit</p>
+          </div>
+        </div>
+      )}
 
       {/* ── Message Alert ────────────────────────────────────────────────── */}
       {showMessageAlert && (
@@ -480,9 +625,24 @@ export default function ListenPage() {
               </div>
             </div>
             <p className="text-gray-800 mb-6">{showMessageAlert.message}</p>
+            
+            {showMessageAlert.audioBase64 && (
+              <div className="mb-6 w-full">
+                <audio 
+                  controls 
+                  src={showMessageAlert.audioBase64} 
+                  className="w-full" 
+                  autoPlay={false}
+                />
+              </div>
+            )}
+
             <div className="flex gap-3">
               <button
-                onClick={dismissMessageAlert}
+                onClick={() => {
+                  acknowledgeMessage(showMessageAlert.id);
+                  dismissMessageAlert();
+                }}
                 className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium"
               >
                 Acknowledge
@@ -525,7 +685,7 @@ export default function ListenPage() {
                       : sent
                         ? 'Audio and location sent. Notification dispatched.'
                         : sending
-                          ? 'Analysing with Gemini AI…'
+                          ? 'Analysing with Aegis AI…'
                           : 'Acoustic stress above limit. Preparing alert.'}
                   </p>
                   {audioPlaybackUrl && (
@@ -707,7 +867,7 @@ export default function ListenPage() {
             <span className="text-[10px] font-mono text-slate-400 tracking-wider">
               {backendStep === 'compressing' && '↓ compressing audio…'}
               {backendStep === 'uploading'   && '↑ uploading to server…'}
-              {backendStep === 'analysing'   && '⟳ gemini analysing…'}
+              {backendStep === 'analysing'   && '⟳ aegis ai analysing…'}
               {backendStep === 'done'        && `✓ analysis done${analysisMs ? ' · ' + analysisMs + 'ms' : ''}`}
             </span>
           </div>
@@ -776,6 +936,15 @@ export default function ListenPage() {
         ) : isRecording ? (
           <div ref={livePillRef} className="flex flex-col items-center gap-3">
             <div className="flex items-center gap-4">
+              {/* Ghost Button */}
+              <button onClick={() => setStealthMode(true)}
+                className="group flex flex-col items-center gap-1 transition-all">
+                <div className="w-14 h-14 rounded-2xl bg-[#0f1011] hover:bg-black active:scale-95 flex items-center justify-center shadow-lg border border-slate-700 transition-all">
+                  <EyeOff className="w-5 h-5 text-slate-300" />
+                </div>
+                <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Ghost</span>
+              </button>
+
               {/* SOS Button */}
               <button onClick={triggerWhatsAppSOS}
                 className="group flex flex-col items-center gap-1 transition-all">

@@ -1,5 +1,28 @@
 'use client';
 import { Cluster } from '@/hooks/useClusters';
+import { useState } from 'react';
+
+function ExpandableText({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false);
+  
+  if (text.length <= 100) {
+    return <p className="text-[10px] text-white/30 mt-2 leading-relaxed whitespace-pre-wrap">{text}</p>;
+  }
+
+  return (
+    <div className="mt-2">
+      <p className={`text-[10px] text-white/30 leading-relaxed whitespace-pre-wrap ${expanded ? '' : 'line-clamp-2 overflow-hidden text-ellipsis'}`}>
+        {text}
+      </p>
+      <button 
+        onClick={() => setExpanded(!expanded)} 
+        className="text-indigo-400/80 hover:text-indigo-300 text-[9px] mt-0.5 inline-block"
+      >
+        {expanded ? "Show less" : "Show more"}
+      </button>
+    </div>
+  );
+}
 
 interface ClusterListProps {
   clusters: Cluster[];
@@ -43,9 +66,7 @@ export function ClusterList({ clusters, onSelectUser }: ClusterListProps) {
               {cluster.centroid.lat.toFixed(4)}, {cluster.centroid.lng.toFixed(4)}
             </p>
             {cluster.analyses && (
-              <p className="text-[10px] text-white/30 mt-2 leading-relaxed">
-                {cluster.analyses}
-              </p>
+              <ExpandableText text={cluster.analyses} />
             )}
             {onSelectUser && cluster.userIds.length > 0 && (() => {
               const uniqueUserIds = [...new Set(cluster.userIds)];

@@ -7,6 +7,7 @@ export interface AgencyMessage {
   id: string;
   userId: string;
   message: string;
+  audioBase64?: string;
   operatorId: string;
   timestamp: Date;
   type: string;
@@ -38,6 +39,7 @@ export function useAgencyMessages(userId: string) {
           id: doc.id,
           userId: data.userId,
           message: data.message,
+          audioBase64: data.audioBase64,
           operatorId: data.operatorId,
           timestamp: data.timestamp.toDate(),
           type: data.type,

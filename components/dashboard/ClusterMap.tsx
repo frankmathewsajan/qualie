@@ -27,6 +27,7 @@ export function ClusterMap({ clusters }: ClusterMapProps) {
         defaultZoom={12}
         gestureHandling={'greedy'}
         disableDefaultUI={true}
+        onClick={() => setSelectedCluster(null)}
       >
         {clusters.map((cluster) => {
           const hue = hashId(cluster.id) % 360;
@@ -60,30 +61,47 @@ export function ClusterMap({ clusters }: ClusterMapProps) {
             position={selectedCluster.centroid}
             onCloseClick={() => setSelectedCluster(null)}
           >
-            <div className="p-2 min-w-[200px] max-w-[280px] text-slate-800 font-sans">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-bold text-sm">Cluster #{selectedCluster.id.slice(-6)}</h3>
-                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold text-white ${
-                  selectedCluster.confidence > 0.8 ? 'bg-red-500' :
-                  selectedCluster.confidence > 0.6 ? 'bg-amber-500' : 'bg-emerald-500'
+            <div className="p-3 min-w-[260px] max-w-[320px] font-sans text-gray-900">
+              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
+                <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+                <h3 className="font-extrabold text-[13px] tracking-tight text-gray-900 flex-1">Cluster #{selectedCluster.id.slice(-6)}</h3>
+                <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                  selectedCluster.confidence > 0.8 ? 'bg-red-50 text-red-600 border border-red-200' :
+                  selectedCluster.confidence > 0.6 ? 'bg-amber-50 text-amber-600 border border-amber-200' : 'bg-emerald-50 text-emerald-600 border border-emerald-200'
                 }`}>
-                  {(selectedCluster.confidence * 100).toFixed(0)}%
+                  {(selectedCluster.confidence * 100).toFixed(0)}% Conf
                 </span>
               </div>
-              <p className="text-[11px] mb-1">
-                <strong>Users involved:</strong> {selectedCluster.count} 
-                {selectedCluster.userIds.length > 0 && ` (${[...new Set(selectedCluster.userIds)].join(', ')})`}
-              </p>
-              <p className="text-[11px] mb-2">
-                <strong>Triggers:</strong> {selectedCluster.eventTypes.join(', ')}
-              </p>
-              {selectedCluster.analyses && (
-                <div className="border-t border-slate-200 mt-2 pt-2">
-                  <p className="text-[11px] text-slate-600 leading-relaxed max-h-[120px] overflow-y-auto pr-1">
-                    {selectedCluster.analyses}
+              
+              <div className="space-y-3">
+                <div>
+                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Users Involved</p>
+                  <p className="text-xs font-semibold text-gray-800">
+                    {selectedCluster.count} {selectedCluster.count === 1 ? 'individual' : 'individuals'}
+                    {selectedCluster.userIds.length > 0 && <span className="text-indigo-600 font-mono text-[10px] ml-1 bg-indigo-50 px-1.5 py-0.5 rounded-md">({[...new Set(selectedCluster.userIds)].join(', ')})</span>}
                   </p>
                 </div>
-              )}
+
+                <div>
+                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-1">Trigger Events</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedCluster.eventTypes.map(type => (
+                      <span key={type} className="px-1.5 py-0.5 bg-gray-100 border border-gray-200 rounded text-[10px] font-semibold text-gray-700 shadow-sm">
+                        {type}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {selectedCluster.analyses && (
+                  <div className="pt-1 mt-1">
+                    <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-1">AI Analysis</p>
+                    <p className="text-[11px] text-gray-700 leading-relaxed max-h-[140px] overflow-y-auto pr-1 bg-gray-50/80 p-2.5 rounded-lg border border-gray-100 shadow-inner whitespace-pre-wrap">
+                      {selectedCluster.analyses}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </InfoWindow>
         )}
