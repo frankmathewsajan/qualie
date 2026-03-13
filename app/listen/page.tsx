@@ -231,13 +231,16 @@ export default function ListenPage() {
     }
   }, [currentUserId, location]);
 
-  const audioCtxRef = useRef<any>(null);
+  const [lastTranscript, setLastTranscript] = useState<string | null>(null);
+  const lastTranscriptRef = useRef<string | null>(null);
+  const transcriptTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { state: geminiState, isSpeaking, chunksSent,
+  const audioCtxRef = useRef<any>(null);  const { state: geminiState, isSpeaking, chunksSent,
           connect: geminiConnect, disconnect: geminiDisconnect } = useGeminiLive({
     onInputTranscript: (text) => {
       // Show transcript as subtle subtext (auto-clears after 4s)
       setLastTranscript(text);
+      lastTranscriptRef.current = text;
       if (transcriptTimer.current) clearTimeout(transcriptTimer.current);
       transcriptTimer.current = setTimeout(() => setLastTranscript(null), 4000);
 
@@ -305,7 +308,6 @@ export default function ListenPage() {
   const [backendStep, setBackendStep]       = useState<'compressing'|'uploading'|'analysing'|'done'|null>(null);
   const [analysisMs, setAnalysisMs]         = useState<number | null>(null);
   const [audioPlaybackUrl, setAudioPlaybackUrl] = useState<string | null>(null);
-  const [lastTranscript, setLastTranscript]     = useState<string | null>(null);
   const [stealthMode, setStealthMode]           = useState(false);
   
   const videoRef          = useRef<HTMLVideoElement | null>(null);
@@ -314,7 +316,6 @@ export default function ListenPage() {
   const sentRef           = useRef(false);
   const gsapRef           = useRef<Gsap | null>(null);
   const playbackUrlRef    = useRef<string | null>(null);
-  const transcriptTimer   = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // element refs for GSAP
   const headerRef    = useRef<HTMLElement>(null);
@@ -569,7 +570,7 @@ export default function ListenPage() {
                   imageBase64: base64,
                   lat: location?.lat || 0,
                   lng: location?.lon || 0,
-                  context: contextStrRef.current || (lastTranscript ? `Transcript: "${lastTranscript}"` : 'Emergency Breach Triggered')
+                  context: contextStrRef.current || (lastTranscriptRef.current ? `Transcript: "${lastTranscriptRef.current}"` : 'Emergency Breach Triggered')
                 })
               }).catch(e => console.error('[camera] upload failed:', e));
             }
