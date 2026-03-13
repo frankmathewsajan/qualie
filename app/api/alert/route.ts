@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, Timestamp, doc, setDoc } from 'firebase/firestore';
 import { clusterAlerts } from '@/lib/clustering';
 
 const GEMINI_REST =
@@ -81,6 +81,7 @@ export async function POST(req: NextRequest) {
     const locRaw   = form.get('location') as string | null;
     const volume   = form.get('volume')   as string | null;
     const city     = form.get('city')     as string | null;
+    const userId   = form.get('userId')   as string | null;
 
     const location   = locRaw ? JSON.parse(locRaw) : null;
     const audioBytes = audio && audio.size > 0 ? await audio.arrayBuffer() : null;
@@ -136,6 +137,7 @@ export async function POST(req: NextRequest) {
     // Store alert in Firestore
     try {
       await addDoc(collection(db, 'alerts'), {
+        userId: userId || 'unknown',
         timestamp: Timestamp.fromDate(new Date()),
         lat: location?.lat || null,
         lng: location?.lon || null,
@@ -145,6 +147,15 @@ export async function POST(req: NextRequest) {
         audioSize: audioBytes ? audioBytes.byteLength : 0,
       });
       log('FIRESTORE', 'Alert stored successfully');
+
+      // Update user's last-known location for emergency WhatsApp messages
+      if (userId && location) {
+        await setDoc(doc(db, 'users', userId), {
+          lastLocation: { lat: location.lat, lng: location.lon },
+          lastAlertAt: Timestamp.fromDate(new Date()),
+        }, { merge: true });
+        log('FIRESTORE', 'User location updated');
+      }
 
       // Trigger clustering
       await clusterAlerts();

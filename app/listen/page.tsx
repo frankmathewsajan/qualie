@@ -1,12 +1,15 @@
 'use client';
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import {
   Mic, Home, PhoneCall, Droplets, Wind,
-  MapPin, AlertTriangle, Navigation, Thermometer, ChevronRight,
+  MapPin, AlertTriangle, Navigation, Thermometer, ChevronRight, Settings,
 } from 'lucide-react';
 import { useAudioMeter } from '@/hooks/useAudioMeter';
 import { useWeather, decodeWeather } from '@/hooks/useWeather';
 import { useGeminiLive } from '@/hooks/useGeminiLive';
+import { useAgencyMessages, AgencyMessage } from '@/hooks/useAgencyMessages';
+import { getUserId } from '@/lib/userId';
+import Link from 'next/link';
 
 const THRESHOLD = 65;
 
@@ -116,6 +119,12 @@ export default function ListenPage() {
   const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
 
+  // Persistent 5-digit random ID — defer to useEffect to avoid hydration mismatch
+  const [currentUserId, setCurrentUserId] = useState('');
+  useEffect(() => { setCurrentUserId(getUserId()); }, []);
+  const { messages, unreadCount, acknowledgeMessage } = useAgencyMessages(currentUserId);
+  const [showMessageAlert, setShowMessageAlert] = useState<AgencyMessage | null>(null);
+
   const sendAlertRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -154,6 +163,64 @@ export default function ListenPage() {
     });
   }, [location]);
 
+  /**
+   * Build a wa.me deep link pre-filled with an emergency message.
+   * Works on any device — no Twilio / API key needed.
+   *
+   * How to use:  Go to Settings → add an emergency contact phone number
+   *              (with country code, e.g. +91...).  When the SOS fires,
+   *              we open WhatsApp with a pre-typed emergency message
+   *              including a Google Maps link.
+   */
+  const triggerWhatsAppSOS = useCallback(async () => {
+    try {
+      // 1. Try to read the user's emergency contact from localStorage/settings
+      let phone = localStorage.getItem('aegis_emergency_phone') || '';
+
+      // 2. If not in localStorage, try fetching from Firestore via settings
+      if (!phone && currentUserId) {
+        try {
+          const { doc, getDoc } = await import('firebase/firestore');
+          const { db } = await import('@/lib/firebase');
+          const userDoc = await getDoc(doc(db, 'users', currentUserId));
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            phone = data.emergencyContacts?.[0]?.phone || data.emergencyContact || '';
+            if (phone) localStorage.setItem('aegis_emergency_phone', phone);
+          }
+        } catch { /* ignore */ }
+      }
+
+      if (!phone) {
+        alert('No emergency contact set!\n\nGo to Settings → add an emergency contact phone number first.');
+        return;
+      }
+
+      // 3. Get location for the Maps link
+      const loc = await ensureLocation();
+      const mapsLink = loc
+        ? `https://maps.google.com/?q=${loc.lat},${loc.lon}`
+        : '(location unavailable)';
+
+      // 4. Build message
+      const msg = encodeURIComponent(
+        `🚨 AEGIS EMERGENCY ALERT\n\n` +
+        `User ID: ${currentUserId}\n` +
+        `Time: ${new Date().toLocaleTimeString()}\n` +
+        `Location: ${mapsLink}\n\n` +
+        `I may be in danger. Please check on me immediately.`
+      );
+
+      // 5. Clean phone number (strip spaces, dashes) and open wa.me link
+      const cleanPhone = phone.replace(/[\s\-()]/g, '');
+      const waUrl = `https://wa.me/${cleanPhone}?text=${msg}`;
+      window.open(waUrl, '_blank');
+      console.log('[listen] WhatsApp SOS triggered via wa.me');
+    } catch (error) {
+      console.error('Error triggering WhatsApp SOS:', error);
+    }
+  }, [ensureLocation, currentUserId]);
+
   const { state: geminiState, isSpeaking, chunksSent,
           connect: geminiConnect, disconnect: geminiDisconnect } = useGeminiLive({
     onInputTranscript: (text) => {
@@ -163,10 +230,15 @@ export default function ListenPage() {
       transcriptTimer.current = setTimeout(() => setLastTranscript(null), 4000);
 
       const lower = text.toLowerCase();
-      const hit   = DISTRESS_KEYWORDS.some(kw => lower.includes(kw));
+      const hit = DISTRESS_KEYWORDS.some(kw => lower.includes(kw));
       if (hit) {
         console.log('[listen] keyword match in transcript:', text);
         sendAlertRef.current?.();
+      }
+
+      if (lower.includes('send emergency message') || lower.includes('send sos')) {
+        console.log('[listen] emergency command detected — triggering WhatsApp SOS');
+        triggerWhatsAppSOS();
       }
     },
   });
@@ -286,6 +358,7 @@ export default function ListenPage() {
       const fd = new FormData();
       fd.append('audio', blob, 'recording.webm');
       fd.append('volume', String(peakVol));
+      fd.append('userId', currentUserId);
       fd.append('location', JSON.stringify(loc));
       fd.append('city', wx?.city ?? '');
 
@@ -335,6 +408,23 @@ export default function ListenPage() {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [isRecording]);
 
+  // ── message alerts ─────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (messages.length > 0 && !showMessageAlert) {
+      const latestMessage = messages[0]; // Most recent message
+      if (!latestMessage.acknowledged) {
+        setShowMessageAlert(latestMessage);
+      }
+    }
+  }, [messages, showMessageAlert]);
+
+  const dismissMessageAlert = () => {
+    if (showMessageAlert) {
+      acknowledgeMessage(showMessageAlert.id);
+      setShowMessageAlert(null);
+    }
+  };
+
   const handleToggle = () => {
     if (isRecording) {
       stop();
@@ -365,6 +455,32 @@ export default function ListenPage() {
   return (
     <div className="min-h-screen flex flex-col font-sans select-none"
          style={{ background: bg, transition: 'background 1.2s ease' }}>
+
+      {/* ── Message Alert ────────────────────────────────────────────────── */}
+      {showMessageAlert && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="w-full max-w-md bg-white rounded-2xl p-6 shadow-2xl">
+            <div className="flex items-center mb-4">
+              <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center mr-3">
+                <AlertTriangle className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-900">Agency Message</h3>
+                <p className="text-sm text-gray-600">From emergency operator</p>
+              </div>
+            </div>
+            <p className="text-gray-800 mb-6">{showMessageAlert.message}</p>
+            <div className="flex gap-3">
+              <button
+                onClick={dismissMessageAlert}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium"
+              >
+                Acknowledge
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Breach sheet ─────────────────────────────────────────────────── */}
       {breached && !dismissed && (
@@ -439,6 +555,11 @@ export default function ListenPage() {
           <p className="text-[10px] font-mono text-slate-300 mt-px">Acoustic Monitor</p>
         </div>
         <div className="flex items-center gap-2">
+          {/* User ID badge */}
+          <div className="flex items-center gap-1.5 bg-white/60 rounded-full px-2.5 py-1 border border-white/80">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <span className="text-[10px] font-bold text-slate-600 tracking-wider font-mono">{currentUserId}</span>
+          </div>
           {/* Gemini Live status badge */}
           {geminiState === 'connecting' && (
             <div className="flex items-center gap-1.5 bg-white/60 rounded-full px-2.5 py-1 border border-white/80">
@@ -462,7 +583,11 @@ export default function ListenPage() {
               <span className="text-[10px] font-semibold text-amber-500 tracking-wide">AI ERR</span>
             </div>
           )}
-          <a href="https://aegis-weather.web.app/"
+          <Link href="/settings"
+            className="w-8 h-8 rounded-full bg-white/70 backdrop-blur-sm shadow-sm flex items-center justify-center hover:shadow-md transition-shadow">
+            <Settings className="w-3.5 h-3.5 text-slate-500" />
+          </Link>
+          <a href="/"
             className="w-8 h-8 rounded-full bg-white/70 backdrop-blur-sm shadow-sm flex items-center justify-center hover:shadow-md transition-shadow">
             <Home className="w-3.5 h-3.5 text-slate-500" />
           </a>
@@ -639,14 +764,25 @@ export default function ListenPage() {
             <p className="text-slate-500 text-sm font-medium">Initialising…</p>
           </div>
         ) : isRecording ? (
-          <div ref={livePillRef} className="flex flex-col items-center gap-2">
-            <div className="flex items-center gap-3 bg-white/60 backdrop-blur-sm rounded-2xl px-5 py-3 shadow-sm border border-white/80">
-              <span className="relative flex h-2.5 w-2.5">
-                <span ref={dotRef} className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"/>
-              </span>
-              <p className="text-slate-600 text-sm font-medium">Listening</p>
-              <span className="text-slate-200">·</span>
-              <span className="text-slate-400 text-xs font-mono">{fmtTime(sessionTime)}</span>
+          <div ref={livePillRef} className="flex flex-col items-center gap-3">
+            <div className="flex items-center gap-4">
+              {/* SOS Button */}
+              <button onClick={triggerWhatsAppSOS}
+                className="group flex flex-col items-center gap-1 transition-all">
+                <div className="w-14 h-14 rounded-2xl bg-red-500 hover:bg-red-600 active:scale-95 flex items-center justify-center shadow-lg shadow-red-200/50 border border-red-400 transition-all">
+                  <PhoneCall className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-[9px] font-bold text-red-500 uppercase tracking-widest">SOS</span>
+              </button>
+              {/* Listen pill */}
+              <div className="flex items-center gap-3 bg-white/60 backdrop-blur-sm rounded-2xl px-5 py-3 shadow-sm border border-white/80">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span ref={dotRef} className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"/>
+                </span>
+                <p className="text-slate-600 text-sm font-medium">Listening</p>
+                <span className="text-slate-200">·</span>
+                <span className="text-slate-400 text-xs font-mono">{fmtTime(sessionTime)}</span>
+              </div>
             </div>
             <button onClick={handleToggle}
               className="text-[12px] text-slate-400 hover:text-slate-600 transition-colors font-medium underline underline-offset-2 decoration-slate-200 hover:decoration-slate-400">
