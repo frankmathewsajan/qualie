@@ -115,7 +115,8 @@ export default function Home() {
       {/* nav */}
       <nav ref={navRef} className={`fixed top-0 inset-x-0 z-40 flex items-center justify-between px-5 sm:px-10 py-4 backdrop-blur-xl border-b transition-colors duration-500 ${c('bg-white/85 border-slate-100', 'bg-[#080810]/75 border-white/5')}`}>
         <div className="flex items-center gap-2">
-          <Shield className={`w-4 h-4 ${c('text-slate-700', 'text-indigo-400')}`} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/aegis-logo.png" alt="Aegis Logo" className="w-5 h-5 object-contain" />
           <span className={`font-black text-base tracking-tight ${c('text-slate-900', 'text-white')}`}>aegis</span>
         </div>
         <div className="flex items-center gap-1">
@@ -217,7 +218,8 @@ export default function Home() {
       <section className="pb-32 px-5">
         <div ref={ctaRef} className={`max-w-2xl mx-auto rounded-3xl border p-12 sm:p-16 text-center transition-colors duration-500 ${c('bg-slate-50 border-slate-200', 'bg-linear-to-br from-indigo-950/80 to-violet-950/80 border-indigo-500/15')}`}>
           <div className="inline-flex items-center gap-2 mb-6">
-            <Shield className={`w-5 h-5 ${c('text-slate-600', 'text-indigo-400')}`} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/aegis-logo.png" alt="Aegis Logo" className="w-6 h-6 object-contain" />
             <span className={`font-black tracking-tight ${c('text-slate-700', 'text-indigo-400')}`}>aegis</span>
           </div>
           <h2 className={`text-3xl sm:text-4xl font-black tracking-tight mb-4 ${c('text-slate-900', 'text-white')}`}>

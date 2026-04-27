@@ -1,4 +1,5 @@
 <div align="center">
+  <img src="public/aegis-logo.png" alt="Aegis Logo" width="120" />
   <h1 align="center">Aegis - AI Acoustic Safety Guardian</h1>
   <p align="center">
     <strong>"Silence is not always safe. Aegis listens when no one else can."</strong>
