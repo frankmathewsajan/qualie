@@ -157,6 +157,5 @@ Identified performance priorities and growth vectors:
 ## Acknowledgements
 
 **Aegis** was built with safety-critical considerations paramount.  
-Licensed.
 
 *“Your voice, always heard.”*
