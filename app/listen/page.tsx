@@ -227,7 +227,7 @@ export default function ListenPage() {
         `I may be in danger. Please check on me immediately.`;
 
       // 5. Show options overlay instead of auto-opening
-      const cleanPhone = phone.replace(/[\s\-()]/g, '');
+      const cleanPhone = phone.replace(/[^\d+]/g, ''); // strip everything except digits and plus sign
       setSosOptions({ phone: cleanPhone, text: msg });
 
       console.log('[listen] WhatsApp SOS triggered - showing options');
@@ -779,9 +779,10 @@ export default function ListenPage() {
             
             <div className="flex flex-col gap-3">
               <button onClick={() => {
+                // api.whatsapp.com/send is universally more robust on desktop/web than wa.me
                 const waUrl = sosOptions.phone 
-                  ? `https://wa.me/${sosOptions.phone}?text=${encodeURIComponent(sosOptions.text)}`
-                  : `https://wa.me/?text=${encodeURIComponent(sosOptions.text)}`;
+                  ? `https://api.whatsapp.com/send?phone=${sosOptions.phone}&text=${encodeURIComponent(sosOptions.text)}`
+                  : `https://api.whatsapp.com/send?text=${encodeURIComponent(sosOptions.text)}`;
                 const a = document.createElement('a');
                 a.href = waUrl; a.target = '_blank'; a.rel = 'noopener noreferrer';
                 document.body.appendChild(a); a.click(); document.body.removeChild(a);
