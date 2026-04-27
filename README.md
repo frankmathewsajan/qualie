@@ -45,7 +45,23 @@ The moment acoustic stress exceeds a safety threshold, Aegis securely dispatches
 Aegis utilizes a dual-pipeline routing architecture to maximize reaction speed while preserving deep AI capabilities:
 
 ```mermaid
-git
+graph TD
+    Mic["Device Microphone"] --> Worklet["AudioWorklet Thread"]
+    
+    Worklet -->|"Zero-Copy Local Buffer"| Volume["RMS Threshold Analyser"]
+    Worklet -->|"16 kHz PCM WebSocket"| GeminiLive["Gemini Live API"]
+
+    Volume -->|"Over 85 dB Breach Trigger"| ActionController{"Breach Actions"}
+    ActionController -->|"Capture"| Camera["Silent Dual Camera Snap"]
+    ActionController -->|"Record"| Chunk["Audio PCM Blob"]
+    ActionController -->|"Geolocate"| GPS["Geolocation API"]
+
+    Chunk --> RouteHandler["Next.js API Route"]
+    GPS --> RouteHandler
+    Camera --> RouteHandler
+    
+    RouteHandler --> Firestore[("Firebase Firestore")]
+    RouteHandler --> GeminiREST["Gemini 2.5 Flash Context Analyser"]
 ```
 
 ### The PWA App Architecture
