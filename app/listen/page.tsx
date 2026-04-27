@@ -645,6 +645,21 @@ export default function ListenPage() {
     }
   };
 
+  const handleDismissAlert = () => {
+    setDismissed(true);
+    // 2 second cooldown before the app can trigger a new alert
+    setTimeout(() => {
+      setBreached(false);
+      setDismissed(false);
+      sentRef.current = false;
+      setSent(false);
+      setPeakVol(0);
+      setGeminiAnalysis(null);
+      setBackendStep(null);
+      setAnalysisMs(null);
+    }, 2000);
+  };
+
   const handleToggle = () => {
     if (isRecording) {
       stop();
@@ -810,7 +825,7 @@ export default function ListenPage() {
       {/* ── Breach sheet ─────────────────────────────────────────────────── */}
       {breached && !dismissed && (
         <div className="fixed inset-0 z-50 flex items-end justify-center p-3 pb-8"
-          onClick={(e) => { if (e.target === e.currentTarget) setDismissed(true); }}>
+          onClick={(e) => { if (e.target === e.currentTarget) handleDismissAlert(); }}>
           <div className="w-full max-w-sm rounded-2xl bg-white overflow-hidden"
             style={{ boxShadow: '0 16px 60px rgba(239,68,68,0.15), 0 2px 8px rgba(0,0,0,0.06)' }}>
             <div className="h-1 w-full bg-red-100 overflow-hidden">
@@ -827,7 +842,7 @@ export default function ListenPage() {
                     <p className="font-semibold text-slate-800 text-[13px] leading-snug">
                       {sent ? 'Alert delivered' : sending ? 'Sending alert…' : 'Threshold exceeded'}
                     </p>
-                    <button onClick={() => setDismissed(true)}
+                    <button onClick={handleDismissAlert}
                       className="text-slate-300 hover:text-slate-600 transition-colors shrink-0 -mt-0.5 -mr-1 p-1">
                       <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
                         <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -863,7 +878,7 @@ export default function ListenPage() {
                     (sending ? 'bg-amber-400 animate-pulse' : sent ? 'bg-emerald-400' : 'bg-red-400')} />
                   {sending ? 'TRANSMITTING' : sent ? 'DELIVERED' : peakVol + '/100'}
                 </span>
-                <button onClick={() => setDismissed(true)}
+                <button onClick={handleDismissAlert}
                   className="text-[11px] font-medium text-slate-400 hover:text-slate-700 transition-colors px-2 py-0.5 rounded-md">
                   Dismiss
                 </button>
