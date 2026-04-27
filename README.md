@@ -20,7 +20,7 @@
 
 ---
 
-Aegis is a real-time, **AI-powered ambient audio safety system** designed to recognize distress natively, intelligently, and respectfully. It continuously monitors an environment through the device microphone using a powerful combination of **Web Audio APIs** for local edge detection and **Google Gemini's Multimodal Live API** for instantaneous contextual incident analysis.
+Aegis is a real-time, **AI-powered ambient audio safety system** cleverly disguised as a standard local weather application to protect users in precarious situations. Behind its innocuous UI, it continuously monitors an environment through the device microphone using a powerful combination of **Web Audio APIs** for local edge detection and **Google Gemini's Multimodal Live API** for instantaneous contextual incident analysis.
 
 The moment acoustic stress exceeds a safety threshold, Aegis securely dispatches context-aware, structured threat intelligence — transforming the device into an active guardian with sub-30ms reaction latency.
 

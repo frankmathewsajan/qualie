@@ -201,11 +201,8 @@ export default function ListenPage() {
         } catch { /* ignore */ }
       }
 
-      if (!phone) {
-        alert('No emergency contact set!\n\nGo to Settings → add an emergency contact phone number first.');
-        return;
-      }
-
+      // No strict phone requirement anymore. We can deep link to WhatsApp 
+      // without a phone number and the user will pick the contact manually.
       // 3. Use cached location to avoid async delay (which causes popup blockers)
       const loc = location;
       const mapsLink = loc
@@ -782,7 +779,9 @@ export default function ListenPage() {
             
             <div className="flex flex-col gap-3">
               <button onClick={() => {
-                const waUrl = `https://wa.me/${sosOptions.phone}?text=${encodeURIComponent(sosOptions.text)}`;
+                const waUrl = sosOptions.phone 
+                  ? `https://wa.me/${sosOptions.phone}?text=${encodeURIComponent(sosOptions.text)}`
+                  : `https://wa.me/?text=${encodeURIComponent(sosOptions.text)}`;
                 const a = document.createElement('a');
                 a.href = waUrl; a.target = '_blank'; a.rel = 'noopener noreferrer';
                 document.body.appendChild(a); a.click(); document.body.removeChild(a);
