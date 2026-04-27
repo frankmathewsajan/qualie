@@ -18,6 +18,7 @@ export default function DashboardPage() {
   const [sendStatus, setSendStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const alertImages = useAlertImages(20);
   const [expandedImage, setExpandedImage] = useState<AlertImage | null>(null);
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
 
   // Audio Recording (Voice of God)
   const [isRecording, setIsRecording] = useState(false);
@@ -165,12 +166,17 @@ export default function DashboardPage() {
             Listen
           </Link>
           <button
-            onClick={refetch}
-            disabled={loading}
-            className="flex items-center gap-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 rounded-xl px-3 py-2 border border-indigo-500/20 text-indigo-400 hover:text-indigo-300 transition-all text-xs font-medium disabled:opacity-50"
+            onClick={() => {
+              if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(50);
+              setIsManualRefreshing(true);
+              refetch();
+              setTimeout(() => setIsManualRefreshing(false), 600);
+            }}
+            disabled={loading || isManualRefreshing}
+            className="flex items-center gap-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 rounded-xl px-3 py-2 border border-indigo-500/20 text-indigo-400 hover:text-indigo-300 transition-all text-xs font-medium disabled:opacity-50 active:scale-95"
           >
-            <RefreshCcw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
-            {loading ? 'Syncing…' : 'Refresh'}
+            <RefreshCcw className={`w-3 h-3 ${loading || isManualRefreshing ? 'animate-spin' : ''}`} />
+            {loading || isManualRefreshing ? 'Syncing…' : 'Refresh'}
           </button>
         </div>
       </header>

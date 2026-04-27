@@ -23,7 +23,7 @@ export function useClusters() {
 
   const fetchClusters = async () => {
     try {
-      const res = await fetch('/api/clusters');
+      const res = await fetch('/api/clusters', { cache: 'no-store' });
       const data = await res.json();
       setClusters(data.map((c: any) => ({
         ...c,

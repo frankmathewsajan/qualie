@@ -3,6 +3,8 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, Timestamp, query, where, updateDoc, doc } from 'firebase/firestore';
 import { clusterAlerts } from '@/lib/clustering';
 
+export const dynamic = 'force-dynamic';
+
 async function checkDeadManSwitches() {
   try {
     const usersRef = collection(db, 'users');
