@@ -6,7 +6,7 @@ import { useState, useRef } from 'react';
 import Link from 'next/link';
 import {
   Shield, RefreshCcw, Send, X, AlertTriangle,
-  Activity, Users, Flame, Mic, Search, Camera
+  Activity, Users, Flame, Mic, Search, Camera, Sun, Moon
 } from 'lucide-react';
 import { useAlertImages, AlertImage } from '@/hooks/useAlertImages';
 
@@ -19,6 +19,7 @@ export default function DashboardPage() {
   const alertImages = useAlertImages(20);
   const [expandedImage, setExpandedImage] = useState<AlertImage | null>(null);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+  const [lightMode, setLightMode] = useState(false);
 
   // Audio Recording (Voice of God)
   const [isRecording, setIsRecording] = useState(false);
@@ -123,14 +124,18 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen flex flex-col font-sans select-none"
-      style={{ background: 'linear-gradient(160deg, #0f172a 0%, #020617 50%, #0c0a1a 100%)' }}>
+      style={{ 
+        background: 'linear-gradient(160deg, #0f172a 0%, #020617 50%, #0c0a1a 100%)',
+        filter: lightMode ? 'invert(1) hue-rotate(180deg)' : 'none',
+        transition: 'filter 0.5s ease'
+      }}>
 
       {/* ── Header ─────────────────────────────────────────────────── */}
       <header className="px-6 pt-5 pb-4 flex items-center justify-between shrink-0 border-b border-white/5">
         <div className="flex items-center gap-3">
-          <div className="p-1 rounded-xl bg-indigo-500/10 border border-indigo-500/20">
+          <div className="p-1">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/aegis-logo.png" alt="Aegis Logo" className="w-7 h-7 object-contain" />
+            <img src="/aegis-logo.png" alt="Aegis Logo" className="w-7 h-7 object-contain drop-shadow-md" style={{ filter: lightMode ? 'invert(1) hue-rotate(180deg)' : 'none', transition: 'filter 0.5s ease' }} />
           </div>
           <div>
             <h1 className="text-base font-bold text-white tracking-tight">AEGIS Dashboard</h1>
@@ -161,6 +166,13 @@ export default function DashboardPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setLightMode(!lightMode)}
+            className="flex items-center justify-center w-8 h-8 mr-1 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white/50 hover:text-white/80 transition-all"
+            style={{ filter: lightMode ? 'invert(1) hue-rotate(180deg)' : 'none', transition: 'filter 0.5s ease' }}
+          >
+            {lightMode ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+          </button>
           <Link href="/listen"
             className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 rounded-xl px-3 py-2 border border-white/10 text-white/50 hover:text-white/80 transition-all text-xs font-medium">
             <Activity className="w-3 h-3" />
@@ -285,7 +297,9 @@ export default function DashboardPage() {
               <p className="text-white/30 text-sm font-medium">Loading clusters…</p>
             </div>
           ) : (
-            <ClusterMap clusters={clusters} />
+            <div style={{ width: '100%', height: '100%', filter: lightMode ? 'invert(1) hue-rotate(180deg)' : 'none', transition: 'filter 0.5s ease' }}>
+              <ClusterMap clusters={clusters} />
+            </div>
           )}
         </div>
 
@@ -359,6 +373,7 @@ export default function DashboardPage() {
                         src={img.image}
                         alt={`Capture from ${img.userId}`}
                         className="w-full aspect-[4/3] object-cover border border-white/5 group-hover:border-indigo-500/40 transition-all group-hover:scale-105 duration-500"
+                        style={{ filter: lightMode ? 'invert(1) hue-rotate(180deg)' : 'none', transition: 'filter 0.5s ease' }}
                       />
 
                       {/* Hover Context Preview */}
@@ -389,7 +404,7 @@ export default function DashboardPage() {
         <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setExpandedImage(null)}>
           <div className="relative max-w-5xl w-full flex flex-col md:flex-row gap-4 items-center md:items-stretch h-full py-8 text-left" onClick={e => e.stopPropagation()}>
             <div className="flex-1 flex justify-center w-full relative">
-              <img src={expandedImage.image} alt="Expanded capture" className="max-w-full max-h-[85vh] object-contain rounded-xl border border-white/10 shadow-2xl" />
+              <img src={expandedImage.image} alt="Expanded capture" className="max-w-full max-h-[85vh] object-contain rounded-xl border border-white/10 shadow-2xl" style={{ filter: lightMode ? 'invert(1) hue-rotate(180deg)' : 'none', transition: 'filter 0.5s ease' }} />
             </div>
             {expandedImage.context && (
               <div className="md:w-80 w-full bg-white/5 border border-white/10 rounded-xl p-5 overflow-y-auto max-h-[30vh] md:max-h-[85vh] text-sm text-white/80 leading-relaxed font-light shadow-2xl backdrop-blur-md">
