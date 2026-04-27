@@ -119,9 +119,7 @@ export default function Home() {
           <span className={`font-black text-base tracking-tight ${c('text-slate-900', 'text-white')}`}>aegis</span>
         </div>
         <div className="flex items-center gap-1">
-          <Link href="/login" className={`text-sm font-medium transition-colors px-3 py-1.5 ${c('text-slate-500 hover:text-slate-800', 'text-white/40 hover:text-white')}`}>
-            Sign in
-          </Link>
+
           <button
             onClick={() => setDark(d => !d)}
             aria-label="Toggle theme"
