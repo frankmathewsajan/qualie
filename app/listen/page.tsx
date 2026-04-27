@@ -203,8 +203,8 @@ export default function ListenPage() {
 
       // No strict phone requirement anymore. We can deep link to WhatsApp 
       // without a phone number and the user will pick the contact manually.
-      // 3. Use cached location to avoid async delay (which causes popup blockers)
-      const loc = location;
+      // 3. Ensure we have the latest location (async is safe now because we open a modal, not a popup directly)
+      const loc = await ensureLocation();
       const mapsLink = loc
         ? `https://maps.google.com/?q=${loc.lat},${loc.lon}`
         : '(location unavailable)';

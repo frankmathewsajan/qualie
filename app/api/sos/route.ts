@@ -62,6 +62,17 @@ export async function GET(req: NextRequest) {
 
   const userId = session.userId;
 
+  // Step 1.5: fetch live user location from heartbeat
+  let liveLocation: { lat: number, lng: number } | null = null;
+  try {
+    const userSnap = await getDoc(doc(db, 'users', userId));
+    if (userSnap.exists() && userSnap.data().lastLocation) {
+      liveLocation = userSnap.data().lastLocation;
+    }
+  } catch (error) {
+    console.warn('[sos/GET] could not load user live location:', error);
+  }
+
   // Step 2: fetch latest alert — only where(), sort in JS to avoid composite index requirement
   let latestAlert = null;
   try {
@@ -100,8 +111,8 @@ export async function GET(req: NextRequest) {
     session: {
       userId: session.userId,
       userName: session.userName,
-      lat: latestAlert?.lat ?? session.lat,
-      lng: latestAlert?.lng ?? session.lng,
+      lat: liveLocation?.lat ?? latestAlert?.lat ?? session.lat,
+      lng: liveLocation?.lng ?? latestAlert?.lng ?? session.lng,
       createdAt: session.createdAt?.toDate?.()?.toISOString(),
       active: session.active,
     },
