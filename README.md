@@ -4,7 +4,7 @@
     <strong>"Silence is not always safe. Aegis listens when no one else can."</strong>
     <br/>
     <br/>
-    <a href="https://aegis-weather.web.app/" target="_blank">View Live Demo</a>
+    <a href="https://qualie--aegis-weather.asia-southeast1.hosted.app/" target="_blank">View Live Demo</a>
     ·
     <a href="https://github.com/frankmathewsajan/qualie/issues" target="_blank">Report a Bug</a>
   </p>
@@ -24,57 +24,95 @@ Aegis is a real-time, **AI-powered ambient audio safety system** designed to rec
 
 The moment acoustic stress exceeds a safety threshold, Aegis securely dispatches context-aware, structured threat intelligence — transforming the device into an active guardian with sub-30ms reaction latency.
 
-## Key Features
+## 🌟 Comprehensive Features
 
-### Core Safety Systems
-- **Edge Acoustic Monitoring**: Near-zero latency threshold analysis using **Web Audio API** and a custom isolated `AudioWorklet`. No cloud processing overhead, no idle API costs.
+### 🛡️ Client-Side Safety Systems
+- **Edge Acoustic Monitoring**: Near-zero latency threshold analysis using **Web Audio API** and a custom isolated `AudioWorklet`. 
 - **Multimodal AI Fallback**: Integrates natively with the **Google Gemini 2.5 Flash Native Audio API** to interpret raw sound data (like distinguishing a genuine cry for help from a loud TV).
-- **Stealth Mode UI**: A double-tap disguised lock screen interface that completely conceals the application's active monitoring state.
+- **Stealth Mode (Ghost UI)**: A double-tap disguised lock screen interface that completely conceals the application's active monitoring state.
 - **Silent Camera Burst**: Automatically and silently captures front and rear uncompressed photography directly triggered upon a breach. 
-- **Context-Aware Analytics**: Injects high-accuracy **Open-Meteo** weather telemetry and live Geolocation to prevent false positives (e.g. thunder strikes vs. structural impacts).
+- **Context-Aware Analytics**: Injects high-accuracy **Open-Meteo** weather telemetry and live Geolocation to prevent false positives.
+- **Continuous Multi-Alert Support**: Smart cooldowns allow the system to trigger multiple independent safety alerts in the same session if environmental dangers persist.
+- **Dead-Man Switch**: A continuous heartbeat connection. If the device is abruptly destroyed or loses signal, the system registers a critical connection loss alert.
 
-### Emergency Dispatch & Tracking
+### 📡 Emergency Dispatch & Dashboard Console
+- **Live Guardian Dashboard**: A centralized, real-time command center built for emergency operators. Monitors all active user clusters, live map telemetry, and aggregated threat data.
+- **Two-Way "Voice of God" Operator Audio**: Dispatchers can record live audio broadcasts directly from the dashboard and push them to the user's device.
+- **Live Text Messaging & Notifications**: Operators can send critical textual guidance to users, firing local OS-level push notifications to ensure delivery even if the screen is locked.
 - **WhatsApp SOS Integration**: Fallback emergency contact routing capable of blasting automated, pre-typed deep-link distress beacons (`wa.me`) bypassing restrictive mobile browser popup constraints.
-- **Live Guardian Dashboard**: Secure, session-based continuous location tracking routes utilizing **Firebase Firestore** as an active dead-man switch updating position every 5 seconds.
-- **Operator Push-To-Talk Voice of God**: PWA Service Worker push-notifications via **Web-Push & Firebase Cloud Messaging** empowering emergency dispatch operators to directly ping the device with audio commands or silent textual alerts even if the screen is locked.
+- **Fake Call Generation**: A simulated incoming phone call interface to help users safely de-escalate or exit uncomfortable situations.
 
 ---
 
-## System Architecture
-
-Aegis utilizes a dual-pipeline routing architecture to maximize reaction speed while preserving deep AI capabilities:
+## 📐 Architecture Diagram
 
 ```mermaid
 graph TD
-    Mic["Device Microphone"] --> Worklet["AudioWorklet Thread"]
-    
-    Worklet -->|"Zero-Copy Local Buffer"| Volume["RMS Threshold Analyser"]
-    Worklet -->|"16 kHz PCM WebSocket"| GeminiLive["Gemini Live API"]
+    subgraph Client_Device ["Client Device"]
+        Mic["Device Microphone"] --> Worklet["AudioWorklet Thread"]
+        Worklet -->|"Local Buffer"| Volume["RMS Threshold Analyser"]
+        Worklet -->|"16 kHz PCM WebSocket"| GeminiLive["Gemini Live API"]
 
-    Volume -->|"Over 85 dB Breach Trigger"| ActionController{"Breach Actions"}
-    ActionController -->|"Capture"| Camera["Silent Dual Camera Snap"]
-    ActionController -->|"Record"| Chunk["Audio PCM Blob"]
-    ActionController -->|"Geolocate"| GPS["Geolocation API"]
+        Volume -->|"> 85 dB Trigger"| ActionController{"Breach Actions"}
+        ActionController -->|"Dual Capture"| Camera["Silent Dual Camera Snap"]
+        ActionController -->|"Record"| Chunk["Audio PCM Blob"]
+        ActionController -->|"Geolocate"| GPS["Geolocation API"]
+    end
 
-    Chunk --> RouteHandler["Next.js API Route"]
-    GPS --> RouteHandler
-    Camera --> RouteHandler
-    
-    RouteHandler --> Firestore[("Firebase Firestore")]
-    RouteHandler --> GeminiREST["Gemini 2.5 Flash Context Analyser"]
+    subgraph Firebase_Cloud ["Firebase Cloud"]
+        Chunk -->|"POST /api/alert"| API["Next.js Route Handlers"]
+        GPS --> API
+        Camera --> API
+        
+        API -->|"Store"| Firestore[("Firebase Firestore")]
+        API -->|"Analyze"| GeminiREST["Gemini 2.5 Flash REST"]
+    end
+
+    subgraph Command_Center ["Command Center"]
+        Firestore -->|"Real-time Sync"| Dashboard["Guardian Dashboard"]
+        Dashboard -->|"Voice of God / Text"| DispatchAPI["/api/messages"]
+        DispatchAPI --> Firestore
+        Firestore -->|"Push Notif"| ClientDevice["Target User Device"]
+    end
 ```
-
-### The PWA App Architecture
-Leveraging **Next.js 16 (App Router)** deployed directly to **Firebase App Hosting**:
-- A robust main application loop heavily augmented with `GSAP` and `Framer Motion` for incredibly fluid visual fidelity.
-- PWA manifests configured for seamless offline-enabled installation across iOS, iPadOS, and Android.
-- State synchronized by `useAgencyMessages`, allowing bidirectional contact with active emergency agencies.
 
 ---
 
-## Technology Stack
+## 🔄 Use-Case / Process Flow
 
-- **Framework**: Next.js (App Router, Server Actions)
+```mermaid
+sequenceDiagram
+    participant User as User Device
+    participant Edge as AudioWorklet (Edge)
+    participant Backend as Next.js API / Firebase
+    participant AI as Gemini 2.5 Flash
+    participant Operator as Guardian Dashboard
+
+    User->>Edge: Start Monitoring (Mic active)
+    loop Continuous
+        User->>Backend: Heartbeat (Dead-Man Switch)
+    end
+
+    Note over Edge: Acoustic spike > 85dB detected
+    Edge->>User: Trigger Breach Event
+    User->>User: Silent Dual Camera Capture
+    User->>User: Buffer Audio Clip
+    User->>Backend: POST /api/alert (Audio, Location, Photos)
+    
+    Backend->>AI: Analyze Audio & Context
+    AI-->>Backend: Return Threat Assessment
+    Backend->>Operator: Live Dashboard Update (Cluster Map)
+    
+    Operator->>Operator: Review Analytics & Photos
+    Operator->>Backend: Send Voice Message ("Voice of God")
+    Backend->>User: Force-play Audio / Show Notification
+```
+
+---
+
+## 💻 Technologies Used
+
+- **Frontend & Backend Framework**: Next.js 15+ (App Router, Server Actions)
 - **Database & Hosting**: Firebase (Firestore, Cloud Messaging, App Hosting)
 - **AI / ML**: Google Gemini 2.5 Flash Native Audio (via both `v1beta` Live API WebSockets and REST endpoint batch analytics)
 - **Styling & UI**: Tailwind CSS v4, Lucide React, Radix UI Primitives, GSAP for fluid scroll and entry animations
@@ -83,7 +121,25 @@ Leveraging **Next.js 16 (App Router)** deployed directly to **Firebase App Hosti
 
 ---
 
-## Getting Started
+## 📱 UI Wireframes & Layout Mockup
+
+*While the application features highly fluid, interactive designs, the conceptual layout follows a tactical, minimal structure:*
+
+**1. Listener Interface (`/listen`)**
+- **Header**: Connection status (Gemini WebSocket), User ID badge, Settings.
+- **Center**: Weather telemetry, Context-aware "Listening" status.
+- **Footer**: Tactical button row (Ghost Mode, Fake Call, SOS, Siren Alarm), and the main "Stop/Start" monitoring toggle.
+- **Overlays**: Fake iOS/Android lock screens for Stealth Mode.
+
+**2. Guardian Dashboard (`/dashboard`)**
+- **Header**: Global system stats, total active alerts, high-confidence threat counter.
+- **Left Panel**: Scrollable list of active threat clusters and users.
+- **Center Panel**: Interactive Google Map pinning live threat coordinates.
+- **Right Panel**: Detailed analytics, recent silent camera captures, and the "Message User" operator interface.
+
+---
+
+## 🚀 Getting Started
 
 ### Prerequisites
 
@@ -113,7 +169,7 @@ Leveraging **Next.js 16 (App Router)** deployed directly to **Firebase App Hosti
    # Client-side key (used for WebSocket live interactions)
    NEXT_PUBLIC_GEMINI_API_KEY=your_gemini_key
 
-   # Full publicly addressable URL (required for some referrers & web push generation)
+   # Full publicly addressable URL
    NEXT_PUBLIC_APP_URL=http://localhost:3000
 
    # Firebase Configuration (Public config)
@@ -144,18 +200,16 @@ Navigate to `http://localhost:3000/listen`. Be sure to grant Microphone, Local S
 
 ---
 
-## Roadmap & Optimizations
+## 🔮 Future Development & Optimizations
 
-Identified performance priorities and growth vectors:
-- **On-Device Model Filtering**: Replacing backend ML analytics with an optimized client-side `TensorFlow.js` YAMNet implementation to classify ambient noises autonomously.
-- **RTC Stream Relays**: Progressing from short-chunk uploads to consistent WebRTC data streams bridging multiple Guardian devices.
-- **Federated Identity**: Deploying Google Firebase Authentication wrapper for streamlined user provisioning.
-- **Hardware Integration**: Expanding the listening stack to intercept physical Bluetooth earpiece hardware button events to bypass phone lock screens completely.
+- **On-Device Edge Filtering**: Replacing cloud-based ML analytics with an optimized client-side `TensorFlow.js` YAMNet implementation to classify ambient noises autonomously.
+- **Continuous WebRTC Streams**: Progressing from short-chunk uploads to consistent WebRTC data streams bridging multiple Guardian devices in real-time.
+- **Hardware Integration**: Expanding the listening stack to intercept physical Bluetooth LE earpiece hardware button events to bypass phone lock screens completely.
+- **Federated Authentication**: Deploying Google Firebase Authentication wrapper for streamlined operator and user provisioning.
 
 ---
 
-## Acknowledgements
-
-**Aegis** was built with safety-critical considerations paramount.  
-
-*“Your voice, always heard.”*
+<div align="center">
+  <p><strong>Aegis</strong> was built with safety-critical considerations paramount.</p>
+  <p><em>“Your voice, always heard.”</em></p>
+</div>
