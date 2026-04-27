@@ -26,6 +26,9 @@ env:
     secret: GEMINI_API_KEY
 
   # Public Firebase/Google configurations
+  - variable: NEXT_PUBLIC_APP_URL
+    value: https://qualie--aegis-weather.asia-southeast1.hosted.app
+
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
     value: AIzaSyB9g1gQynlTdjzjYeEdK1Iga9fPEJG5NR4
   - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
