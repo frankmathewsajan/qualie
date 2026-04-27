@@ -57,7 +57,7 @@ export function ClusterList({ clusters, onSelectUser }: ClusterListProps) {
               </span>
             </div>
             <p className="text-[11px] text-white/40 mb-1">
-              {cluster.count} users · {cluster.eventTypes.join(', ')}
+              {cluster.count} alerts · {cluster.eventTypes.join(', ')}
             </p>
             <p className="text-[10px] text-white/25 font-mono">
               {cluster.timeWindow.start.toLocaleTimeString()} – {cluster.timeWindow.end.toLocaleTimeString()}
