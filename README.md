@@ -24,9 +24,9 @@ Aegis is a real-time, **AI-powered ambient audio safety system** designed to rec
 
 The moment acoustic stress exceeds a safety threshold, Aegis securely dispatches context-aware, structured threat intelligence — transforming the device into an active guardian with sub-30ms reaction latency.
 
-## 🌟 Comprehensive Features
+## Comprehensive Features
 
-### 🛡️ Client-Side Safety Systems
+### Client-Side Safety Systems
 - **Edge Acoustic Monitoring**: Near-zero latency threshold analysis using **Web Audio API** and a custom isolated `AudioWorklet`. 
 - **Multimodal AI Fallback**: Integrates natively with the **Google Gemini 2.5 Flash Native Audio API** to interpret raw sound data (like distinguishing a genuine cry for help from a loud TV).
 - **Stealth Mode (Ghost UI)**: A double-tap disguised lock screen interface that completely conceals the application's active monitoring state.
@@ -35,7 +35,7 @@ The moment acoustic stress exceeds a safety threshold, Aegis securely dispatches
 - **Continuous Multi-Alert Support**: Smart cooldowns allow the system to trigger multiple independent safety alerts in the same session if environmental dangers persist.
 - **Dead-Man Switch**: A continuous heartbeat connection. If the device is abruptly destroyed or loses signal, the system registers a critical connection loss alert.
 
-### 📡 Emergency Dispatch & Dashboard Console
+### Emergency Dispatch & Dashboard Console
 - **Live Guardian Dashboard**: A centralized, real-time command center built for emergency operators. Monitors all active user clusters, live map telemetry, and aggregated threat data.
 - **Two-Way "Voice of God" Operator Audio**: Dispatchers can record live audio broadcasts directly from the dashboard and push them to the user's device.
 - **Live Text Messaging & Notifications**: Operators can send critical textual guidance to users, firing local OS-level push notifications to ensure delivery even if the screen is locked.
@@ -44,7 +44,7 @@ The moment acoustic stress exceeds a safety threshold, Aegis securely dispatches
 
 ---
 
-## 📐 Architecture Diagram
+## Architecture Diagram
 
 ```mermaid
 graph TD
@@ -78,7 +78,7 @@ graph TD
 
 ---
 
-## 🔄 Use-Case / Process Flow
+## Use-Case / Process Flow
 
 ```mermaid
 sequenceDiagram
@@ -110,7 +110,7 @@ sequenceDiagram
 
 ---
 
-## 💻 Technologies Used
+## Technologies Used
 
 - **Frontend & Backend Framework**: Next.js 15+ (App Router, Server Actions)
 - **Database & Hosting**: Firebase (Firestore, Cloud Messaging, App Hosting)
@@ -121,7 +121,7 @@ sequenceDiagram
 
 ---
 
-## 📱 UI Wireframes & Layout Mockup
+## UI Wireframes & Layout Mockup
 
 *While the application features highly fluid, interactive designs, the conceptual layout follows a tactical, minimal structure:*
 
@@ -139,7 +139,7 @@ sequenceDiagram
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -200,7 +200,7 @@ Navigate to `http://localhost:3000/listen`. Be sure to grant Microphone, Local S
 
 ---
 
-## 🔮 Future Development & Optimizations
+## Future Development & Optimizations
 
 - **On-Device Edge Filtering**: Replacing cloud-based ML analytics with an optimized client-side `TensorFlow.js` YAMNet implementation to classify ambient noises autonomously.
 - **Continuous WebRTC Streams**: Progressing from short-chunk uploads to consistent WebRTC data streams bridging multiple Guardian devices in real-time.
