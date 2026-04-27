@@ -20,27 +20,30 @@ export function ClusterMap({ clusters }: ClusterMapProps) {
   const [selectedCluster, setSelectedCluster] = useState<Cluster | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY?.trim() || '';
+  const fallbackCenter = clusters[0]?.centroid ?? { lat: 16.51, lng: 80.52 };
+  const bbox = [
+    (fallbackCenter.lng - 0.08).toFixed(6),
+    (fallbackCenter.lat - 0.06).toFixed(6),
+    (fallbackCenter.lng + 0.08).toFixed(6),
+    (fallbackCenter.lat + 0.06).toFixed(6),
+  ].join(',');
+  const fallbackSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${fallbackCenter.lat},${fallbackCenter.lng}`;
 
-  if (!apiKey) {
+  if (!apiKey || mapError) {
     return (
-      <div className="h-full w-full flex items-center justify-center p-6 bg-white/2 border border-white/5 rounded-2xl">
-        <div className="max-w-sm text-center space-y-2">
-          <p className="text-sm font-semibold text-white">Map unavailable</p>
-          <p className="text-xs text-white/40 leading-relaxed">
-            Set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY to a valid Google Maps JavaScript API key to enable the cluster map.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (mapError) {
-    return (
-      <div className="h-full w-full flex items-center justify-center p-6 bg-white/2 border border-white/5 rounded-2xl">
-        <div className="max-w-sm text-center space-y-2">
-          <p className="text-sm font-semibold text-white">Map unavailable</p>
-          <p className="text-xs text-white/40 leading-relaxed">
-            Google Maps failed to load. The cluster list still works, but the map needs a valid Maps key and an enabled Maps JavaScript API in Google Cloud.
+      <div className="h-full w-full rounded-2xl border border-white/5 overflow-hidden bg-white/2">
+        <iframe
+          src={fallbackSrc}
+          className="w-full h-full"
+          title="Cluster map fallback"
+          loading="lazy"
+        />
+        <div className="absolute bottom-3 left-3 right-3 p-2 rounded-lg bg-black/55 border border-white/10 backdrop-blur-sm">
+          <p className="text-[11px] font-semibold text-white">OpenStreetMap fallback active</p>
+          <p className="text-[10px] text-white/60 leading-relaxed">
+            {!apiKey
+              ? 'Google Maps key is missing in the running app environment.'
+              : 'Google Maps failed to load for this key. Using fallback map for now.'}
           </p>
         </div>
       </div>
@@ -52,7 +55,8 @@ export function ClusterMap({ clusters }: ClusterMapProps) {
       apiKey={apiKey}
       onError={(error) => {
         console.error('[ClusterMap] Google Maps failed to load:', error);
-        setMapError('Google Maps failed to load');
+        const msg = error instanceof Error ? error.message : String(error);
+        setMapError(msg || 'Google Maps failed to load');
       }}
     >
       <Map
