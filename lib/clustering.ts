@@ -2,11 +2,11 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, query, where, orderBy, Timestamp, writeBatch } from 'firebase/firestore';
 
 export async function clusterAlerts() {
-  // Fetch recent alerts (last 10 minutes)
-  const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+  // Fetch recent alerts (last 20 minutes)
+  const twentyMinutesAgo = new Date(Date.now() - 20 * 60 * 1000);
   const alertsQuery = query(
     collection(db, 'alerts'),
-    where('timestamp', '>', Timestamp.fromDate(tenMinutesAgo)),
+    where('timestamp', '>', Timestamp.fromDate(twentyMinutesAgo)),
     orderBy('timestamp', 'desc')
   );
   const alerts = await getDocs(alertsQuery);
@@ -27,7 +27,7 @@ export async function clusterAlerts() {
       if (!other.lat || !other.lng) continue;
       if (processed.has(other.id)) continue;
       const distance = getDistance(alert.lat, alert.lng, other.lat, other.lng);
-      if (distance < 0.5) { // 500m
+      if (distance < 10) { // 10km
         cluster.push(other);
         processed.add(other.id);
       }
