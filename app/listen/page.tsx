@@ -230,7 +230,7 @@ export default function ListenPage() {
       const cleanPhone = phone.replace(/[^\d+]/g, ''); // strip everything except digits and plus sign
       setSosOptions({ phone: cleanPhone, text: msg });
 
-      console.log('[listen] WhatsApp SOS triggered - showing options');
+
 
       // 6. If we generated a new link, save the session to the backend
       if (newSessionId) {
@@ -261,12 +261,12 @@ export default function ListenPage() {
         const lower = text.toLowerCase();
         const hit = DISTRESS_KEYWORDS.some(kw => lower.includes(kw));
         if (hit) {
-          console.log('[listen] keyword match in transcript:', text);
+
           sendAlertRef.current?.();
         }
 
         if (lower.includes('send emergency message') || lower.includes('send sos')) {
-          console.log('[listen] emergency command detected — triggering WhatsApp SOS');
+
           triggerWhatsAppSOS();
         }
       },
@@ -586,7 +586,7 @@ export default function ListenPage() {
             if (ctx) {
               ctx.drawImage(videoRef.current, 0, 0, vw, vh);
               const base64 = canvas.toDataURL('image/jpeg', 0.5);
-              console.log(`[camera] captured ${face} photo`, vw, 'x', vh, 'size:', Math.round(base64.length / 1024), 'KB');
+
 
               fetch('/api/alert/images', {
                 method: 'POST',
@@ -609,7 +609,7 @@ export default function ListenPage() {
       }
 
       if (videoRef.current) videoRef.current.srcObject = null;
-      console.log('[camera] burst sequence complete - both cameras captured');
+
     };
 
     captureSequence();

@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Aegis — Your voice, always heard.",
+  title: "Aegis: Your voice, always heard.",
   description: "Real-time acoustic monitoring that sends a compressed audio clip and GPS coordinates to your guardian the moment stress levels spike.",
 };
 

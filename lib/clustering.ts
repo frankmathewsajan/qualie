@@ -75,7 +75,7 @@ export async function cleanupExpiredData() {
         const batch = writeBatch(db);
         snaps.docs.forEach(doc => batch.delete(doc.ref));
         await batch.commit();
-        console.log(`[cleanup] Destroyed ${snaps.size} expired records in ${col} (> 24 hours)`);
+        // Cleanup log removed
       }
     } catch (e: any) {
       // Ignore missing index errors on first run, it will still clean effectively over time

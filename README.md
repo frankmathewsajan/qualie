@@ -1,6 +1,6 @@
 <div align="center">
   <img src="public/aegis-logo.png" alt="Aegis Logo" width="120" />
-  <h1 align="center">Aegis - AI Acoustic Safety Guardian</h1>
+  <h1 align="center">Aegis: AI Acoustic Safety Guardian</h1>
   <p align="center">
     <strong>"Silence is not always safe. Aegis listens when no one else can."</strong>
     <br/>
@@ -79,35 +79,14 @@ graph TD
 
 ---
 
-## Use-Case / Process Flow
+## Technical Approach & Implementation Nuances
 
-```mermaid
-sequenceDiagram
-    participant User as User Device
-    participant Edge as AudioWorklet (Edge)
-    participant Backend as Next.js API / Firebase
-    participant AI as Gemini 2.5 Flash
-    participant Operator as Guardian Dashboard
+Aegis handles audio processing with absolute privacy and efficiency by shifting the initial load to the client's edge.
 
-    User->>Edge: Start Monitoring (Mic active)
-    loop Continuous
-        User->>Backend: Heartbeat (Dead-Man Switch)
-    end
-
-    Note over Edge: Acoustic spike > 85dB detected
-    Edge->>User: Trigger Breach Event
-    User->>User: Silent Dual Camera Capture
-    User->>User: Buffer Audio Clip
-    User->>Backend: POST /api/alert (Audio, Location, Photos)
-    
-    Backend->>AI: Analyze Audio & Context
-    AI-->>Backend: Return Threat Assessment
-    Backend->>Operator: Live Dashboard Update (Cluster Map)
-    
-    Operator->>Operator: Review Analytics & Photos
-    Operator->>Backend: Send Voice Message ("Voice of God")
-    Backend->>User: Force-play Audio / Show Notification
-```
+1. **AudioWorklet Isolation**: Instead of pushing continuous microphone data to the cloud, a highly optimized `AudioWorklet` thread processes raw PCM data locally. It computes the Root Mean Square (RMS) volume of the audio stream every few milliseconds, completely insulated from the main UI thread's React render cycles.
+2. **Dynamic Context Aggregation**: When the edge detects an acoustic spike surpassing the defined threshold (or specific distress keywords), the client captures a continuous buffer of audio. Simultaneously, it pulls live weather APIs, geolocation data, and triggers a silent dual-camera burst to build a comprehensive contextual packet.
+3. **Gemini Live & REST Synergy**: While the `v1beta` Live WebSocket API handles continuous streaming and instantaneous distress keyword recognition, the packaged breach data (Audio Blob + Location + Context) is sent to a Serverless function (`Next.js Route Handler`), which batches a rich multimodal prompt to the standard Gemini 2.5 Flash API for high-accuracy threat assessment.
+4. **Resilient Communication**: The system uses Firebase Firestore not just as a database, but as a real-time WebSocket pipe. This ensures that when the AI completes its analysis, the Command Center dashboard reflects the new threat cluster immediately, and any operator messages are pushed instantaneously down to the imperiled user's device.
 
 ---
 
@@ -119,24 +98,6 @@ sequenceDiagram
 - **Styling & UI**: Tailwind CSS v4, Lucide React, Radix UI Primitives, GSAP for fluid scroll and entry animations
 - **Mapping**: `@vis.gl/react-google-maps`
 - **Native APIs**: Web Audio API (Level 2 WebRTC), HTML5 MediaDevices (Camera), Navigator Geolocation, PWA Notification Service Workers.
-
----
-
-## UI Wireframes & Layout Mockup
-
-*While the application features highly fluid, interactive designs, the conceptual layout follows a tactical, minimal structure:*
-
-**1. Listener Interface (`/listen`)**
-- **Header**: Connection status (Gemini WebSocket), User ID badge, Settings.
-- **Center**: Weather telemetry, Context-aware "Listening" status.
-- **Footer**: Tactical button row (Ghost Mode, Fake Call, SOS, Siren Alarm), and the main "Stop/Start" monitoring toggle.
-- **Overlays**: Fake iOS/Android lock screens for Stealth Mode.
-
-**2. Guardian Dashboard (`/dashboard`)**
-- **Header**: Global system stats, total active alerts, high-confidence threat counter.
-- **Left Panel**: Scrollable list of active threat clusters and users.
-- **Center Panel**: Interactive Google Map pinning live threat coordinates.
-- **Right Panel**: Detailed analytics, recent silent camera captures, and the "Message User" operator interface.
 
 ---
 
